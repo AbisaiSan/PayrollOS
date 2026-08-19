@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
@@ -52,6 +52,28 @@ router.on('navigate', () => {
     drawerAberto.value = false;
 });
 
+/*
+ * Com o drawer aberto o body não deve rolar por trás do scrim: no celular isso
+ * faz o usuário perder a posição da lista ao fechar o menu.
+ */
+watch(drawerAberto, (aberto) => {
+    document.body.style.overflow = aberto ? 'hidden' : '';
+});
+
+const aoTeclar = (evento: KeyboardEvent) => {
+    if (evento.key === 'Escape' && drawerAberto.value) {
+        drawerAberto.value = false;
+    }
+};
+
+onMounted(() => document.addEventListener('keydown', aoTeclar));
+
+onBeforeUnmount(() => {
+    document.removeEventListener('keydown', aoTeclar);
+    // Sai sem deixar o body travado se o layout for desmontado com o drawer aberto.
+    document.body.style.overflow = '';
+});
+
 // Mensagens vindas de redirect (with('sucesso', ...)) viram toast.
 watch(
     () => page.props.flash,
@@ -85,7 +107,9 @@ watch(
 
         <!-- Sidebar: fixa no desktop, drawer sobreposto abaixo de 1024px -->
         <aside
-            class="fixed inset-y-0 left-0 z-40 flex w-sidebar flex-col gap-1 bg-gradient-to-b from-azul-600 to-azul-700 px-3.5 py-5 text-white transition-transform duration-200 lg:translate-x-0"
+            id="menu-lateral"
+            aria-label="Menu principal"
+            class="fixed inset-y-0 left-0 z-40 flex w-sidebar flex-col gap-1 bg-gradient-to-b from-azul-600 to-azul-700 px-3.5 py-5 text-white transition-transform duration-200 motion-reduce:transition-none lg:translate-x-0"
             :class="drawerAberto ? 'translate-x-0 shadow-pop' : '-translate-x-full'"
         >
             <Link :href="route('dashboard')" class="flex items-center gap-2.5 px-2 pb-[22px] pt-1.5">
@@ -139,10 +163,12 @@ watch(
                 <button
                     type="button"
                     class="rounded-[7px] p-1.5 text-ink-70 hover:bg-ink-8 lg:hidden"
-                    aria-label="Abrir menu"
+                    :aria-label="drawerAberto ? 'Fechar menu' : 'Abrir menu'"
+                    :aria-expanded="drawerAberto"
+                    aria-controls="menu-lateral"
                     @click="drawerAberto = !drawerAberto"
                 >
-                    <Icone nome="menu" :tamanho="20" />
+                    <Icone :nome="drawerAberto ? 'x' : 'menu'" :tamanho="20" />
                 </button>
 
                 <div class="min-w-0 flex-1">

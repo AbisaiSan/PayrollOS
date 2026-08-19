@@ -62,3 +62,27 @@
 .p-confirmdialog {
     @apply rounded-lg shadow-pop;
 }
+
+/*
+ * Abaixo de 1024px a sidebar vira drawer e o espaço da topbar fica disputado
+ * entre título, ações e menu do usuário. As ações abrem mão do rótulo e ficam
+ * só com o ícone; o title do botão preserva o texto para leitores de tela.
+ */
+@media (max-width: 1023.98px) {
+    .topbar-acoes .p-button-label {
+        @apply hidden;
+    }
+
+    .topbar-acoes .p-button {
+        @apply px-2.5;
+    }
+
+    .topbar-acoes .p-button .p-button-icon {
+        @apply m-0;
+    }
+
+    /* Toast ocupa a largura útil no celular em vez de espremer o texto. */
+    .p-toast {
+        @apply left-3 right-3 w-auto;
+    }
+}
