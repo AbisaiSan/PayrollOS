@@ -1,0 +1,125 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\Periodicidade;
+use App\Enums\StatusContrato;
+use App\Enums\TipoContrato;
+use App\Http\Requests\ContratoRequest;
+use App\Models\CategoriaPagamento;
+use App\Models\Contrato;
+use App\Models\Fornecedor;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class ContratoController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $this->authorize('viewAny', Contrato::class);
+
+        $contratos = Contrato::query()
+            ->with(['fornecedor:id,razao_social,nome_fantasia', 'categoria:id,nome'])
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->string('tipo')))
+            ->when($request->filled('fornecedor_id'), fn ($q) => $q->where('fornecedor_id', $request->integer('fornecedor_id')))
+            ->orderBy('descricao')
+            ->paginate($request->integer('por_pagina', 20))
+            ->withQueryString();
+
+        return Inertia::render('Contratos/Index', [
+            'contratos' => $contratos,
+            'filtros' => $request->only(['status', 'tipo', 'fornecedor_id']),
+            'opcoes' => [
+                'status' => StatusContrato::opcoes(),
+                'tipo' => TipoContrato::opcoes(),
+            ],
+        ]);
+    }
+
+    public function create(): Response
+    {
+        $this->authorize('create', Contrato::class);
+
+        return Inertia::render('Contratos/Form', [
+            'contrato' => null,
+            'opcoes' => $this->opcoesFormulario(),
+        ]);
+    }
+
+    public function store(ContratoRequest $request): RedirectResponse
+    {
+        $this->authorize('create', Contrato::class);
+
+        $contrato = Contrato::create($request->validated());
+
+        return redirect()
+            ->route('contratos.show', $contrato)
+            ->with('sucesso', 'Contrato cadastrado.');
+    }
+
+    public function show(Contrato $contrato): Response
+    {
+        $this->authorize('view', $contrato);
+
+        $contrato->load(['fornecedor', 'categoria:id,nome', 'contaBancaria', 'anexos']);
+
+        return Inertia::render('Contratos/Show', [
+            'contrato' => $contrato,
+            'pagamentosGerados' => $contrato->pagamentos()
+                ->latest('data_vencimento')
+                ->limit(20)
+                ->get(['id', 'descricao', 'valor', 'data_vencimento', 'status']),
+        ]);
+    }
+
+    public function edit(Contrato $contrato): Response
+    {
+        $this->authorize('update', $contrato);
+
+        return Inertia::render('Contratos/Form', [
+            'contrato' => $contrato,
+            'opcoes' => $this->opcoesFormulario(),
+        ]);
+    }
+
+    public function update(ContratoRequest $request, Contrato $contrato): RedirectResponse
+    {
+        $this->authorize('update', $contrato);
+
+        $contrato->update($request->validated());
+
+        return redirect()
+            ->route('contratos.show', $contrato)
+            ->with('sucesso', 'Contrato atualizado.');
+    }
+
+    public function destroy(Contrato $contrato): RedirectResponse
+    {
+        $this->authorize('delete', $contrato);
+
+        $contrato->update(['status' => StatusContrato::Encerrado]);
+
+        return redirect()
+            ->route('contratos.index')
+            ->with('sucesso', 'Contrato encerrado. Novos lançamentos automáticos não serão mais gerados.');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function opcoesFormulario(): array
+    {
+        return [
+            'fornecedores' => Fornecedor::ativos()
+                ->orderBy('razao_social')
+                ->get(['id', 'razao_social', 'nome_fantasia']),
+            'categorias' => CategoriaPagamento::ativas()->orderBy('nome')->get(['id', 'nome']),
+            'tipo' => TipoContrato::opcoes(),
+            'periodicidade' => Periodicidade::opcoes(),
+            'status' => StatusContrato::opcoes(),
+        ];
+    }
+}
