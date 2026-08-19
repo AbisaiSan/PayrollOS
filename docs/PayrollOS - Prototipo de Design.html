@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PayrollOS — Protótipo de Design</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  /* brand — fixed per briefing */
+  --orange-50:#FEF3ED; --orange-100:#FDE2D3; --orange-200:#FAC4A7; --orange-300:#F7A57B;
+  --orange-400:#F5904F; --orange-500:#F37B46; --orange-600:#DB5F26; --orange-700:#B14A1D;
+  --orange-800:#87381A; --orange-900:#5C2712;
+  --blue-50:#EDF1FA; --blue-100:#D4DCF2; --blue-200:#A9B9E5; --blue-300:#7E95D8;
+  --blue-400:#5372CB; --blue-500:#3457B4; --blue-600:#214396; --blue-700:#1A3577;
+  --blue-800:#132758; --blue-900:#0C1939;
+  --ink:#0D0E0E; --app-bg:#EFEFEE; --white:#FFFFFF;
+
+  /* semantic status — distinguishable by shape+color, independent of brand palette */
+  --success:#146C43; --success-bg:#E7F5EC; --success-line:#BFE3CC;
+  --info:#0E7C86; --info-bg:#E3F5F6; --info-line:#BEE4E7;
+  --warn:#9A6300; --warn-bg:#FBF0DC; --warn-line:#F0DBA8;
+  --danger:#B3261E; --danger-bg:#FBEAE8; --danger-line:#F3C6C1;
+  --secondary:#5B6169; --secondary-bg:#EEEFF0; --secondary-line:#D9DBDE;
+
+  /* neutrals derived from ink */
+  --ink-90:rgba(13,14,14,.90); --ink-70:rgba(13,14,14,.70); --ink-55:rgba(13,14,14,.55);
+  --ink-35:rgba(13,14,14,.35); --ink-16:rgba(13,14,14,.12); --ink-08:rgba(13,14,14,.07);
+
+  --font-ui:'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px;
+  --shadow-card:0 1px 2px rgba(13,14,14,.06), 0 1px 1px rgba(13,14,14,.04);
+  --shadow-pop:0 12px 32px rgba(13,14,14,.18), 0 2px 8px rgba(13,14,14,.10);
+  --sidebar-w:256px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-ui);
+  color:var(--ink);
+  background:#15161A;
+  -webkit-font-smoothing:antialiased;
+}
+button, input, select, textarea{font-family:inherit;}
+::selection{background:var(--orange-200);}
+a{color:inherit;}
+.hidden{display:none !important;}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+button{cursor:pointer;}
+:focus-visible{outline:2px solid var(--blue-500);outline-offset:2px;}
+
+/* ============ PROTOTYPE CHROME (meta — not part of the product) ============ */
+.proto-topbar{
+  height:44px;background:#15161A;color:#DEDFE3;display:flex;align-items:center;gap:14px;
+  padding:0 16px;font-size:12.5px;position:sticky;top:0;z-index:500;border-bottom:1px solid #2A2C33;
+}
+.proto-topbar .proto-brand{font-weight:600;color:#fff;letter-spacing:.2px;display:flex;align-items:center;gap:8px;}
+.proto-topbar .proto-brand .dot{width:7px;height:7px;border-radius:50%;background:var(--orange-500);}
+.proto-sep{width:1px;height:18px;background:#33353D;}
+.proto-nav-btn{
+  background:#22242B;border:1px solid #34363F;color:#DEDFE3;border-radius:7px;padding:5px 9px;
+  font-size:12.5px;display:flex;align-items:center;gap:6px;
+}
+.proto-nav-btn:hover{background:#2B2D35;border-color:#43454F;}
+.proto-select{
+  background:#22242B;border:1px solid #34363F;color:#fff;border-radius:7px;padding:5px 10px;
+  font-size:12.5px;max-width:340px;
+}
+.proto-count{color:#8B8D97;font-size:12px;}
+.proto-count b{color:#DEDFE3;font-weight:600;}
+.proto-right{margin-left:auto;display:flex;align-items:center;gap:10px;}
+.proto-viewport-toggle{display:flex;background:#22242B;border:1px solid #34363F;border-radius:7px;overflow:hidden;}
+.proto-viewport-toggle button{background:transparent;border:0;color:#9A9CA6;padding:5px 10px;font-size:12px;display:flex;align-items:center;gap:5px;}
+.proto-viewport-toggle button.active{background:var(--orange-500);color:#fff;}
+
+.proto-stage{background:#15161A;min-height:calc(100vh - 44px);padding:28px 20px 60px;display:flex;justify-content:center;}
+.device{width:100%;max-width:1440px;background:var(--app-bg);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-pop);}
+.device.mobile{max-width:390px;}
+.device-frame-label{color:#6E7079;font-size:11px;text-align:center;margin-bottom:8px;letter-spacing:.02em;}
+
+/* ============ APP SHELL ============ */
+.app-shell{display:flex;min-height:760px;position:relative;background:var(--app-bg);}
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 auto;background:var(--blue-600);
+  background-image:linear-gradient(180deg, var(--blue-600), var(--blue-700) 100%);
+  color:#fff;display:flex;flex-direction:column;padding:20px 14px;gap:4px;
+}
+.mobile .sidebar{position:fixed;top:0;bottom:0;left:0;z-index:80;transform:translateX(-100%);transition:transform .22s ease;box-shadow:var(--shadow-pop);}
+.mobile .sidebar.open{transform:translateX(0);}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:6px 8px 22px;}
+.sidebar-logo svg{flex:0 0 auto;}
+.sidebar-logo-text{font-weight:700;font-size:16.5px;letter-spacing:.01em;}
+.sidebar-logo-text small{display:block;font-weight:400;font-size:10.5px;color:rgba(255,255,255,.62);letter-spacing:.04em;text-transform:uppercase;margin-top:1px;}
+.nav-group-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:rgba(255,255,255,.42);padding:14px 10px 6px;}
+.nav-item{
+  display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:8px;color:rgba(255,255,255,.72);
+  font-size:13.75px;font-weight:500;border:0;background:transparent;width:100%;text-align:left;
+}
+.nav-item svg{opacity:.85;flex:0 0 auto;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.active{background:var(--orange-500);color:#fff;}
+.nav-item.active svg{opacity:1;}
+.sidebar-spacer{flex:1;}
+.sidebar-footnote{
+  font-size:10.75px;line-height:1.5;color:rgba(255,255,255,.5);border-top:1px solid rgba(255,255,255,.14);
+  padding:14px 10px 4px;
+}
+.sidebar-scrim{display:none;}
+.mobile .sidebar-scrim.open{display:block;position:fixed;inset:0;background:rgba(13,14,14,.45);z-index:70;}
+
+.main-col{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}
+.topbar{
+  height:64px;background:#fff;border-bottom:1px solid var(--ink-08);display:flex;align-items:center;
+  gap:14px;padding:0 24px;position:sticky;top:0;z-index:40;
+}
+.mobile .topbar{padding:0 14px;}
+.hamburger{display:none;background:transparent;border:0;padding:6px;border-radius:7px;color:var(--ink-70);}
+.mobile .hamburger{display:flex;}
+.hamburger:hover{background:var(--ink-08);}
+.topbar-titles{min-width:0;}
+.topbar-titles h1{font-size:16.5px;margin:0;font-weight:600;letter-spacing:-.01em;}
+.topbar-titles p{font-size:12.5px;margin:1px 0 0;color:var(--ink-55);}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+.mobile .topbar-actions .btn span.lbl{display:none;}
+.user-menu{display:flex;align-items:center;gap:9px;padding-left:12px;border-left:1px solid var(--ink-08);margin-left:4px;}
+.mobile .user-menu{border-left:0;padding-left:0;margin-left:0;}
+.mobile .user-menu .user-meta{display:none;}
+.avatar{
+  width:32px;height:32px;border-radius:50%;background:var(--blue-600);color:#fff;display:flex;
+  align-items:center;justify-content:center;font-weight:600;font-size:13px;flex:0 0 auto;
+}
+.user-meta{line-height:1.25;}
+.user-meta .name{font-size:12.75px;font-weight:600;}
+.user-meta .role{font-size:11px;color:var(--ink-55);}
+
+.content{flex:1 1 auto;padding:24px;overflow:auto;}
+.mobile .content{padding:16px;}
+.content-narrow{max-width:960px;}
+
+/* ============ PRIMITIVES ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;border-radius:8px;font-size:13.25px;font-weight:600;
+  padding:9px 14px;border:1px solid transparent;line-height:1;white-space:nowrap;
+}
+.btn svg{flex:0 0 auto;}
+.btn-primary{background:var(--orange-500);color:#fff;}
+.btn-primary:hover{background:var(--orange-600);}
+.btn-secondary{background:#fff;color:var(--ink-90);border-color:var(--ink-16);}
+.btn-secondary:hover{background:var(--ink-08);}
+.btn-ghost{background:transparent;color:var(--ink-70);border-color:transparent;padding:9px 10px;}
+.btn-ghost:hover{background:var(--ink-08);color:var(--ink);}
+.btn-danger-text{background:transparent;color:var(--danger);border-color:transparent;}
+.btn-danger-text:hover{background:var(--danger-bg);}
+.btn-sm{padding:6px 10px;font-size:12.25px;border-radius:7px;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-block{width:100%;justify-content:center;}
+
+.card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-card);border:1px solid var(--ink-08);}
+.card-pad{padding:20px;}
+.card-header{display:flex;align-items:baseline;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--ink-08);}
+.card-header h2{font-size:14.5px;margin:0;font-weight:600;}
+.card-header .hint{font-size:12px;color:var(--ink-55);}
+
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-55);font-weight:600;margin:0 0 12px;}
+
+/* status chip — legible by shape, not only color */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 9px 4px 7px;border-radius:100px;
+  font-size:12.25px;font-weight:600;border:1px solid transparent;white-space:nowrap;
+}
+.chip svg{flex:0 0 auto;}
+.chip-success{background:var(--success-bg);color:var(--success);border-color:var(--success-line);}
+.chip-info{background:var(--info-bg);color:var(--info);border-color:var(--info-line);}
+.chip-warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-line);}
+.chip-danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-line);}
+.chip-secondary{background:var(--secondary-bg);color:var(--secondary);border-color:var(--secondary-line);}
+
+.pix-tag{display:inline-flex;align-items:center;gap:5px;color:var(--blue-600);font-size:12px;font-weight:600;}
+
+/* indicator cards */
+.indicators{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.mobile .indicators{grid-template-columns:1fr;}
+.indicator-card{background:#fff;border:1px solid var(--ink-08);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-card);}
+.indicator-card.alert{border-color:var(--danger-line);background:linear-gradient(180deg,#fff,var(--danger-bg) 220%);}
+.indicator-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.indicator-icon{width:32px;height:32px;border-radius:9px;background:var(--blue-50);color:var(--blue-600);display:flex;align-items:center;justify-content:center;}
+.indicator-card.alert .indicator-icon{background:var(--danger-bg);color:var(--danger);}
+.indicator-label{font-size:12.25px;color:var(--ink-55);font-weight:500;}
+.indicator-value{font-family:var(--font-mono);font-size:22px;font-weight:600;letter-spacing:-.01em;margin:2px 0 3px;}
+.indicator-detail{font-size:11.75px;color:var(--ink-55);}
+.indicator-card.alert .indicator-detail{color:var(--danger);font-weight:600;}
+
+/* table grammar */
+.table-wrap{overflow-x:auto;}
+table.grid{width:100%;border-collapse:collapse;font-size:13.25px;}
+table.grid thead th{
+  text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-55);
+  font-weight:600;padding:10px 16px;border-bottom:1px solid var(--ink-08);white-space:nowrap;position:sticky;top:0;background:#fff;z-index:2;
+}
+table.grid th.num, table.grid td.num{text-align:right;}
+table.grid tbody td{padding:12px 16px;border-bottom:1px solid var(--ink-08);vertical-align:top;}
+table.grid tbody tr{transition:background .1s;}
+table.grid tbody tr.clickable{cursor:pointer;}
+table.grid tbody tr.clickable:hover{background:var(--orange-50);}
+table.grid tbody tr.row-overdue{background:var(--danger-bg);}
+table.grid tbody tr.row-overdue:hover{background:#F7DCD9;}
+table.grid tbody tr:last-child td{border-bottom:0;}
+.cell-primary{font-weight:600;color:var(--ink);}
+.cell-primary.link:hover{color:var(--orange-600);text-decoration:underline;}
+.cell-sub{font-size:12px;color:var(--ink-55);margin-top:2px;}
+.cell-money{font-family:var(--font-mono);font-weight:600;}
+.count-badge{font-family:var(--font-mono);font-weight:600;padding:2px 8px;border-radius:100px;background:var(--ink-08);font-size:12.25px;}
+.count-badge.zero{background:var(--danger-bg);color:var(--danger);}
+
+.totals-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.total-pill{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--ink-08);border-radius:var(--radius-md);padding:10px 16px;box-shadow:var(--shadow-card);}
+.total-pill.alert{border-color:var(--danger-line);background:var(--danger-bg);}
+.total-pill .tp-label{font-size:11.5px;color:var(--ink-55);}
+.total-pill.alert .tp-label{color:var(--danger);}
+.total-pill .tp-value{font-family:var(--font-mono);font-weight:700;font-size:15px;}
+.total-pill.alert .tp-value{color:var(--danger);}
+
+/* filters */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+.field-control{
+  background:#fff;border:1px solid var(--ink-16);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--ink-90);
+  display:flex;align-items:center;gap:8px;min-height:36px;
+}
+.field-control svg{color:var(--ink-35);flex:0 0 auto;}
+.field-control input, .field-control select{border:0;background:transparent;outline:0;font-size:13px;color:var(--ink-90);width:100%;}
+.field-search{min-width:230px;}
+.field-select{min-width:150px;}
+.field-date{min-width:140px;}
+.btn-clear-filters{color:var(--orange-600);font-size:12.5px;font-weight:600;background:transparent;border:0;display:flex;align-items:center;gap:4px;padding:6px 4px;}
+
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--ink-08);flex-wrap:wrap;gap:10px;}
+.pagination .p-info{font-size:12.5px;color:var(--ink-55);}
+.pagination .p-size{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-55);}
+.pagination .p-size select{border:1px solid var(--ink-16);border-radius:6px;padding:4px 6px;font-size:12.5px;}
+.p-pages{display:flex;gap:4px;}
+.p-pages button{width:30px;height:30px;border-radius:7px;border:1px solid var(--ink-16);background:#fff;font-size:12.5px;font-weight:600;color:var(--ink-70);}
+.p-pages button.active{background:var(--blue-600);border-color:var(--blue-600);color:#fff;}
+.p-pages button:hover:not(.active){background:var(--ink-08);}
+
+/* forms */
+.form-card{padding:20px;}
+.form-card + .form-card{margin-top:16px;}
+.form-card h3{font-size:14px;margin:0 0 3px;font-weight:600;}
+.form-card .form-card-hint{font-size:12px;color:var(--ink-55);margin:0 0 16px;}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.mobile .form-grid{grid-template-columns:1fr;}
+.form-grid .span-2{grid-column:1 / -1;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{font-size:12.75px;font-weight:600;color:var(--ink-90);display:flex;align-items:center;gap:5px;}
+.field label .req{color:var(--orange-600);}
+.field .field-hint{font-size:11.5px;color:var(--ink-55);}
+.field .field-hint.linked{color:var(--blue-600);}
+.input, select.input, textarea.input{
+  border:1px solid var(--ink-16);border-radius:8px;padding:9px 11px;font-size:13.5px;color:var(--ink-90);
+  background:#fff;width:100%;
+}
+.input:focus{border-color:var(--blue-400);}
+textarea.input{resize:vertical;min-height:64px;font-family:inherit;}
+.input-money{font-family:var(--font-mono);}
+.toggle-group{display:flex;background:var(--ink-08);border-radius:8px;padding:3px;gap:2px;}
+.toggle-group button{flex:1;padding:8px;border-radius:6px;border:0;background:transparent;font-size:13px;font-weight:600;color:var(--ink-55);display:flex;align-items:center;justify-content:center;gap:6px;}
+.toggle-group button.active{background:#fff;color:var(--ink);box-shadow:var(--shadow-card);}
+.form-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-top:1px solid var(--ink-08);background:#fff;position:sticky;bottom:0;border-radius:0 0 var(--radius-lg) var(--radius-lg);}
+
+/* two-col detail layout */
+.detail-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;}
+.mobile .detail-grid{grid-template-columns:1fr;}
+.dl{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;}
+.mobile .dl{grid-template-columns:1fr;}
+.dl-item dt{font-size:11.5px;color:var(--ink-55);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;}
+.dl-item dd{margin:0;font-size:13.75px;font-weight:500;}
+.dl-item dd.mono{font-family:var(--font-mono);}
+
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--secondary-bg);border:1px solid var(--secondary-line);border-radius:var(--radius-md);padding:12px 14px;font-size:12.75px;color:var(--ink-70);margin-bottom:16px;}
+.banner.warn{background:var(--warn-bg);border-color:var(--warn-line);color:#7A4E00;}
+.banner svg{flex:0 0 auto;margin-top:1px;color:inherit;}
+
+/* timeline */
+.timeline{position:relative;padding-left:26px;}
+.timeline::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:1.5px;background:var(--ink-16);}
+.timeline-item{position:relative;padding-bottom:20px;}
+.timeline-item:last-child{padding-bottom:0;}
+.timeline-dot{position:absolute;left:-26px;top:2px;width:19px;height:19px;border-radius:50%;background:#fff;border:2px solid var(--ink-16);display:flex;align-items:center;justify-content:center;}
+.timeline-dot.auto{border-style:dashed;}
+.timeline-head{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.timeline-meta{font-size:11.75px;color:var(--ink-55);margin-top:2px;}
+.timeline-note{font-size:12.5px;color:var(--ink-70);margin-top:5px;background:var(--ink-08);border-radius:7px;padding:7px 10px;}
+.auto-tag{font-size:10.5px;background:var(--blue-50);color:var(--blue-600);padding:1px 7px;border-radius:100px;font-weight:600;}
+
+/* accounts panel */
+.account-item{border:1px solid var(--ink-08);border-radius:var(--radius-md);padding:13px 14px;margin-bottom:10px;}
+.account-item:last-child{margin-bottom:0;}
+.account-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.account-bank{font-weight:600;font-size:13.5px;}
+.account-nums{font-family:var(--font-mono);font-size:12px;color:var(--ink-55);margin-top:2px;}
+.account-holder{font-size:12px;color:var(--ink-55);margin-top:6px;}
+.account-tags{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.tag-primary{background:var(--orange-50);color:var(--orange-700);font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;}
+.tag-inactive{background:var(--secondary-bg);color:var(--secondary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:100px;}
+.account-actions{display:flex;gap:12px;margin-top:9px;}
+.account-actions button{font-size:11.75px;font-weight:600;color:var(--blue-600);background:transparent;border:0;padding:0;}
+.account-actions button.danger{color:var(--danger);}
+
+/* proportion bars */
+.prop-row{margin-bottom:12px;}
+.prop-row:last-child{margin-bottom:0;}
+.prop-top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px;}
+.prop-top .pname{font-weight:500;}
+.prop-top .pval{font-family:var(--font-mono);font-weight:600;}
+.prop-track{height:6px;background:var(--ink-08);border-radius:100px;overflow:hidden;}
+.prop-fill{height:100%;background:var(--orange-400);border-radius:100px;}
+
+/* modal */
+.modal-scrim{position:fixed;inset:0;background:rgba(13,14,14,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:460px;box-shadow:var(--shadow-pop);max-height:90vh;display:flex;flex-direction:column;}
+.modal.modal-wide{max-width:620px;}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--ink-08);}
+.modal-head h3{margin:0;font-size:15.5px;font-weight:600;}
+.modal-head p{margin:3px 0 0;font-size:12.25px;color:var(--ink-55);}
+.modal-body{padding:20px;overflow:auto;}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;padding:16px 20px;border-top:1px solid var(--ink-08);}
+.close-x{background:transparent;border:0;color:var(--ink-55);padding:4px;border-radius:6px;}
+.close-x:hover{background:var(--ink-08);color:var(--ink);}
+.transition-options{display:flex;flex-direction:column;gap:8px;}
+.transition-opt{display:flex;align-items:center;gap:10px;border:1.5px solid var(--ink-16);border-radius:9px;padding:11px 12px;background:#fff;text-align:left;}
+.transition-opt:hover{border-color:var(--blue-300);background:var(--blue-50);}
+.transition-opt.selected{border-color:var(--blue-500);background:var(--blue-50);}
+.transition-opt .to-label{font-weight:600;font-size:13.25px;flex:1;}
+
+/* toasts */
+.toast-stack{position:fixed;top:76px;right:20px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.mobile .toast-stack{right:12px;left:12px;top:70px;}
+.toast{display:flex;align-items:flex-start;gap:10px;background:var(--ink);color:#fff;padding:12px 14px;border-radius:10px;box-shadow:var(--shadow-pop);font-size:13px;max-width:340px;}
+.toast.success{background:#0F3D24;}
+.toast.error{background:#4A130E;}
+.toast svg{flex:0 0 auto;margin-top:1px;}
+
+/* empty / loading / error states */
+.state-block{display:flex;flex-direction:column;align-items:center;text-align:center;padding:56px 24px;color:var(--ink-55);}
+.state-icon{width:52px;height:52px;border-radius:14px;background:var(--ink-08);display:flex;align-items:center;justify-content:center;color:var(--ink-35);margin-bottom:16px;}
+.state-title{font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+.state-desc{font-size:12.75px;max-width:340px;line-height:1.5;margin-bottom:16px;}
+.skeleton{background:linear-gradient(90deg,var(--ink-08) 25%,var(--ink-16) 37%,var(--ink-08) 63%);background-size:400% 100%;animation:sk 1.4s ease infinite;border-radius:6px;}
+@keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+
+/* login */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--blue-900);background-image:radial-gradient(circle at 20% 20%, var(--blue-700), var(--blue-900) 60%);padding:24px;}
+.login-card{background:#fff;border-radius:18px;padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow-pop);}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:26px;}
+.login-title{font-size:17px;font-weight:700;margin:0 0 4px;}
+.login-sub{font-size:12.75px;color:var(--ink-55);margin:0 0 24px;}
+.login-foot{text-align:center;font-size:11.5px;color:var(--ink-35);margin-top:22px;}
+
+/* prototype index */
+.idx-groups{display:flex;flex-direction:column;gap:22px;}
+.idx-group h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-55);margin:0 0 10px;}
+.idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;}
+.idx-card{display:flex;align-items:center;gap:10px;border:1px solid var(--ink-08);border-radius:9px;padding:10px 12px;background:#fff;text-align:left;}
+.idx-card:hover{border-color:var(--blue-300);}
+.idx-num{font-family:var(--font-mono);font-size:11px;color:var(--ink-35);width:20px;flex:0 0 auto;}
+.idx-name{font-size:12.75px;font-weight:500;flex:1;}
+.idx-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
+.idx-dot.ready{background:var(--success);}
+.idx-dot.todo{background:var(--ink-16);}
+
+.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--orange-600);font-weight:700;margin:0 0 6px;}
+.pagetitle{font-size:20px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;}
+.pagedesc{font-size:13px;color:var(--ink-55);margin:0 0 20px;max-width:640px;}
+</style>
+</head>
+<body>
+<div id="proto-topbar"></div>
+<div class="proto-stage"><div id="device" class="device"><div id="app-root"></div></div></div>
+<script>
+/* ============================================================
+   PayrollOS — Prototype script
+   ============================================================ */
+(function(){
+"use strict";
+
+/* ---------- icon set (hand-rolled, feather-style, 20x20) ---------- */
+const ICONS = {
+  home:'<path d="M3 10.5 10 4l7 6.5"/><path d="M5 9v7a1 1 0 0 0 1 1h3v-5h2v5h3a1 1 0 0 0 1-1V9"/>',
+  wallet:'<rect x="2.5" y="5.5" width="15" height="11" rx="2"/><path d="M2.5 8.5h15"/><circle cx="14" cy="12" r="1"/>',
+  receipt:'<path d="M5 3h10v14l-2-1.2L11 17l-2-1.2L7 17l-2-1.2V3Z"/><path d="M7.5 7h5M7.5 10h5"/>',
+  users:'<circle cx="7.5" cy="7" r="2.5"/><path d="M2.5 16c0-2.5 2.2-4 5-4s5 1.5 5 4"/><circle cx="14.5" cy="7.5" r="2"/><path d="M12.5 12.2c1.9.2 3.5 1.5 3.5 3.8"/>',
+  briefcase:'<rect x="2.5" y="6.5" width="15" height="10" rx="2"/><path d="M7 6.5V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5"/><path d="M2.5 11h15"/>',
+  file:'<path d="M6 2.5h6l3 3v12H6Z"/><path d="M12 2.5V6h3"/>',
+  tags:'<path d="M3 6.5 10.5 3l6 3-3.5 7.5L3 17V6.5Z" transform="translate(0,-.5)"/><circle cx="7" cy="7.5" r="1"/>',
+  chart:'<path d="M3 17V3"/><path d="M3 17h14"/><rect x="6" y="10" width="2.4" height="7"/><rect x="10.5" y="6.5" width="2.4" height="10.5"/><rect x="15" y="12.5" width="2" height="4.5"/>',
+  history:'<path d="M3.5 10a6.5 6.5 0 1 0 2-4.7"/><path d="M2.5 3.5 3.3 6l2.5-.6"/><path d="M10 6.5V10l2.5 1.5"/>',
+  search:'<circle cx="8.5" cy="8.5" r="5.5"/><path d="M16.5 16.5 13 13"/>',
+  filter:'<path d="M3 4h14l-5.5 6.2V16l-3 1.5v-7.3Z"/>',
+  chevronDown:'<path d="M5 7.5 10 12.5 15 7.5"/>',
+  chevronRight:'<path d="M7.5 5 12.5 10 7.5 15"/>',
+  chevronLeft:'<path d="M12.5 5 7.5 10 12.5 15"/>',
+  plus:'<path d="M10 4v12M4 10h12"/>',
+  x:'<path d="M5 5l10 10M15 5 5 15"/>',
+  menu:'<path d="M3 5.5h14M3 10h14M3 14.5h14"/>',
+  logout:'<path d="M8 17H4.5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1H8"/><path d="M13 14l4-4-4-4"/><path d="M17 10H7.5"/>',
+  bell:'<path d="M10 3.5a4 4 0 0 0-4 4v2.3c0 .6-.2 1.2-.6 1.7L4 13h12l-1.4-1.5a2.6 2.6 0 0 1-.6-1.7V7.5a4 4 0 0 0-4-4Z"/><path d="M8.3 15.5a1.8 1.8 0 0 0 3.4 0"/>',
+  paperclip:'<path d="M13.5 6.5 8 12a2.2 2.2 0 0 0 3.1 3.1l6-6a3.8 3.8 0 0 0-5.4-5.4l-6 6a5.4 5.4 0 0 0 7.6 7.6"/>',
+  download:'<path d="M10 3v10.5"/><path d="M6 10l4 4 4-4"/><path d="M4 16.5h12"/>',
+  more:'<circle cx="4.5" cy="10" r="1.1"/><circle cx="10" cy="10" r="1.1"/><circle cx="15.5" cy="10" r="1.1"/>',
+  clockOutline:'<circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.6 1.6"/>',
+  calendar:'<rect x="3" y="4.5" width="14" height="12" rx="2"/><path d="M3 8.5h14"/><path d="M7 2.5v3M13 2.5v3"/>',
+  checkCircle:'<circle cx="10" cy="10" r="7"/><path d="M6.8 10.2l2.1 2.1 4.3-4.6"/>',
+  alertTriangle:'<path d="M10 3.3 18 16H2Z"/><path d="M10 8.2v3.3"/><circle cx="10" cy="13.6" r="0.15" fill="currentColor" stroke-width="1.6"/>',
+  slashCircle:'<circle cx="10" cy="10" r="7"/><path d="M5.5 5.5l9 9"/>',
+  bank:'<path d="M3 8.5 10 4l7 4.5"/><path d="M4 8.5h12v6.5H4Z"/><path d="M2.5 17h15"/><path d="M6.5 10.5v3.5M10 10.5v3.5M13.5 10.5v3.5"/>',
+  zap:'<path d="M11 3 4.5 11.5H9.5L8.5 17 15.5 8.5H10.5Z"/>',
+  eye:'<path d="M2 10s2.8-5 8-5 8 5 8 5-2.8 5-8 5-8-5-8-5Z"/><circle cx="10" cy="10" r="2.2"/>',
+  edit:'<path d="M12.5 3.5 16 7l-9 9H3.5v-3.5Z"/>',
+  trash:'<path d="M4 6h12"/><path d="M8 6V4.2A1.2 1.2 0 0 1 9.2 3h1.6A1.2 1.2 0 0 1 12 4.2V6"/><path d="M5.5 6 6.2 16a1 1 0 0 0 1 .9h5.6a1 1 0 0 0 1-.9L14.5 6"/>',
+  upload:'<path d="M10 13.5V3"/><path d="M6 7l4-4 4 4"/><path d="M4 16.5h12"/>',
+  lock:'<rect x="4.5" y="9" width="11" height="8" rx="2"/><path d="M6.5 9V6.5a3.5 3.5 0 0 1 7 0V9"/>',
+  mail:'<rect x="2.5" y="4.5" width="15" height="11" rx="2"/><path d="M3 5.5 10 11l7-5.5"/>',
+  shield:'<path d="M10 2.7 16.5 5v5.3c0 4-2.8 6.8-6.5 7.9-3.7-1.1-6.5-3.9-6.5-7.9V5Z"/><path d="M7.3 10 9.2 11.9 12.7 8"/>',
+  alertOctagon:'<path d="M6.3 2.5h7.4L18 6.8v6.4L13.7 17.5H6.3L2 13.2V6.8Z"/><path d="M10 6.5v4.3"/><path d="M10 13.6v.15"/>',
+  refresh:'<path d="M16 10a6 6 0 1 1-2-4.5"/><path d="M16 3v3.5h-3.5"/>',
+  building:'<rect x="4" y="3" width="9" height="14" rx="1"/><path d="M13 8h3v9h-3"/><path d="M6.5 6h1.5M6.5 9h1.5M6.5 12h1.5M9.7 6h1.5M9.7 9h1.5M9.7 12h1.5"/>',
+  minus:'<path d="M4 10h12"/>',
+  info:'<circle cx="10" cy="10" r="7"/><path d="M10 9.2v4"/><circle cx="10" cy="6.7" r=".2" fill="currentColor" stroke-width="1.8"/>'
+};
+function icon(name, size=18, cls=''){
+  const p = ICONS[name] || ICONS.info;
+  return `<svg class="${cls}" width="${size}" height="${size}" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+}
+
+/* ---------- formatting helpers ---------- */
+function money(v){
+  return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+function dateBR(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+function dateTimeBR(iso){
+  const d = new Date(iso);
+  return dateBR(iso.slice(0,10)) + ' ' + iso.slice(11,16);
+}
+function competenciaFmt(v){
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const [y,m]=v.split('-');
+  return `${meses[parseInt(m,10)-1]}/${y}`;
+}
+function cpfFmt(v){
+  return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4');
+}
+function cnpjFmt(v){
+  return v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5');
+}
+function relativeDue(iso){
+  const today = new Date('2026-08-19T00:00:00');
+  const d = new Date(iso+'T00:00:00');
+  const diff = Math.round((d-today)/86400000);
+  if(diff===0) return 'hoje';
+  if(diff===1) return 'amanhã';
+  if(diff>1) return `em ${diff} d`;
+  return `${Math.abs(diff)} d atrás`;
+}
+function initials(name){
+  const parts = name.trim().split(' ');
+  return (parts[0][0] + (parts[parts.length-1][0]||'')).toUpperCase();
+}
+
+
+/* ---------- status vocabulary (exact labels from the briefing) ---------- */
+const STATUS_PAGAMENTO = {
+  pendente:{label:'Pendente', sev:'warn', ic:'clockOutline'},
+  agendado:{label:'Agendado', sev:'info', ic:'calendar'},
+  pago:{label:'Pago', sev:'success', ic:'checkCircle'},
+  atrasado:{label:'Atrasado', sev:'danger', ic:'alertTriangle'},
+  cancelado:{label:'Cancelado', sev:'secondary', ic:'slashCircle'}
+};
+const TRANSICOES_PAGAMENTO = {
+  pendente:['agendado','pago','atrasado','cancelado'],
+  agendado:['pendente','pago','atrasado','cancelado'],
+  atrasado:['agendado','pago','cancelado'],
+  pago:['cancelado','pendente'],
+  cancelado:[]
+};
+const STATUS_REEMBOLSO = {
+  pendente:{label:'Pendente', sev:'warn', ic:'clockOutline'},
+  aprovado:{label:'Aprovado', sev:'info', ic:'checkCircle'},
+  pago:{label:'Pago', sev:'success', ic:'checkCircle'},
+  rejeitado:{label:'Rejeitado', sev:'danger', ic:'slashCircle'}
+};
+const TRANSICOES_REEMBOLSO = {
+  pendente:['aprovado','rejeitado'],
+  aprovado:['pago','rejeitado','pendente'],
+  pago:['aprovado'],
+  rejeitado:['pendente']
+};
+const STATUS_COLAB = {ativo:{label:'Ativo',sev:'success',ic:'checkCircle'}, afastado:{label:'Afastado',sev:'warn',ic:'clockOutline'}, desligado:{label:'Desligado',sev:'secondary',ic:'slashCircle'}};
+const STATUS_FORN = {ativo:{label:'Ativo',sev:'success',ic:'checkCircle'}, inativo:{label:'Inativo',sev:'secondary',ic:'slashCircle'}};
+const STATUS_CONTRATO = {ativo:{label:'Ativo',sev:'success',ic:'checkCircle'}, suspenso:{label:'Suspenso',sev:'warn',ic:'clockOutline'}, encerrado:{label:'Encerrado',sev:'secondary',ic:'slashCircle'}};
+const STATUS_CONTA = {ativa:{label:'Ativa',sev:'success',ic:'checkCircle'}, inativa:{label:'Inativa',sev:'secondary',ic:'slashCircle'}};
+const FORMA_PAGAMENTO = {pix:'Pix', ted:'TED', boleto:'Boleto', dinheiro:'Dinheiro', outro:'Outro'};
+
+function chip(map, statusKey, size){
+  const s = map[statusKey];
+  if(!s) return '';
+  return `<span class="chip chip-${s.sev}">${icon(s.ic, size||13)}${s.label}</span>`;
+}
+
+/* ---------- mock data ---------- */
+const CATEGORIAS = [
+  {id:1,nome:'Salário',tipo:'salario',pagamentos:8,ativo:true},
+  {id:2,nome:'Adiantamento salarial',tipo:'salario',pagamentos:3,ativo:true},
+  {id:3,nome:'Férias',tipo:'ferias',pagamentos:2,ativo:true},
+  {id:4,nome:'Décimo terceiro',tipo:'decimo_terceiro',pagamentos:1,ativo:true},
+  {id:5,nome:'Rescisão',tipo:'rescisao',pagamentos:1,ativo:true},
+  {id:6,nome:'Fornecedor',tipo:'fornecedor',pagamentos:6,ativo:true},
+  {id:7,nome:'Prestação de serviço',tipo:'servico',pagamentos:4,ativo:true},
+  {id:8,nome:'Aluguel',tipo:'fornecedor',pagamentos:1,ativo:true},
+  {id:9,nome:'Licença de software',tipo:'servico',pagamentos:3,ativo:true},
+  {id:10,nome:'Contabilidade',tipo:'servico',pagamentos:1,ativo:true},
+  {id:11,nome:'Reembolso',tipo:'reembolso',pagamentos:0,ativo:true},
+  {id:12,nome:'Outros',tipo:'outro',pagamentos:0,ativo:true}
+];
+
+const COLABORADORES = [
+  {id:1,nome:'Marina Torres Albuquerque',cpf:'52998224725',cargo:'Analista Financeiro Sênior',departamento:'Financeiro',tipo_contrato:'clt',data_admissao:'2021-03-08',salario_base:7200,contas:1,status:'ativo',email:'marina.torres@corebanx.com',telefone:'(98) 99123-4455'},
+  {id:2,nome:'Diego Fontenele Lima',cpf:'11144477735',cargo:'Engenheiro de Software Pleno',departamento:'Engenharia',tipo_contrato:'clt',data_admissao:'2022-06-14',salario_base:8600,contas:1,status:'ativo',email:'diego.lima@corebanx.com',telefone:'(98) 99234-1122'},
+  {id:3,nome:'Rebeca Nunes Serra',cpf:'93541257890',cargo:'Coordenadora de Operações',departamento:'Operações',tipo_contrato:'clt',data_admissao:'2020-01-20',salario_base:9800,contas:0,status:'ativo',email:'rebeca.serra@corebanx.com',telefone:'(98) 99345-7788'},
+  {id:4,nome:'Thiago Bandeira Cutrim',cpf:'70212536408',cargo:'Consultor de Implantação',departamento:'Projetos',tipo_contrato:'pj',data_admissao:'2023-09-01',salario_base:11000,contas:1,status:'afastado',email:'thiago.cutrim@corebanx.com',telefone:'(98) 99456-9900'},
+  {id:5,nome:'Larissa Moraes Coelho',cpf:'38215490672',cargo:'Estagiária de Produto',departamento:'Produto',tipo_contrato:'estagio',data_admissao:'2025-02-10',salario_base:1800,contas:1,status:'ativo',email:'larissa.coelho@corebanx.com',telefone:'(98) 99567-2233'},
+  {id:6,nome:'Everton Sá Ribeiro',cpf:'64789213055',cargo:'Analista de Suporte N2',departamento:'Operações',tipo_contrato:'clt',data_admissao:'2019-11-04',salario_base:5400,contas:1,status:'ativo',email:'everton.ribeiro@corebanx.com',telefone:'(98) 99678-4411'},
+  {id:7,nome:'Camila Pestana Reis',cpf:'20456831099',cargo:'Autônoma — Design',departamento:'Marketing',tipo_contrato:'autonomo',data_admissao:'2024-04-22',salario_base:4200,contas:0,status:'ativo',email:'camila.reis@corebanx.com',telefone:'(98) 99789-6655'},
+  {id:8,nome:'Bruno Castro Muniz',cpf:'45632178091',cargo:'Analista Fiscal',departamento:'Financeiro',tipo_contrato:'clt',data_admissao:'2018-07-16',salario_base:6100,contas:1,status:'desligado',email:'bruno.muniz@corebanx.com',telefone:'(98) 99890-3311',data_desligamento:'2026-06-30'}
+];
+
+const FORNECEDORES = [
+  {id:1,razao_social:'Alpha Contabilidade e Assessoria Ltda',nome_fantasia:'Alpha Contábil',documento:'11222333000181',tipo_pessoa:'pj',tipo_fornecedor:'servico',status:'ativo',contratos:2,contas:1},
+  {id:2,razao_social:'Imobiliária Baía do Sol Ltda',nome_fantasia:'Baía do Sol Imóveis',documento:'22333444000199',tipo_pessoa:'pj',tipo_fornecedor:'servico',status:'ativo',contratos:1,contas:1},
+  {id:3,razao_social:'CloudStack Soluções em Nuvem S.A.',nome_fantasia:'CloudStack',documento:'33444555000112',tipo_pessoa:'pj',tipo_fornecedor:'produto',status:'ativo',contratos:3,contas:1},
+  {id:4,razao_social:'José Rocha Advocacia',nome_fantasia:null,documento:'44555666000123',tipo_pessoa:'pj',tipo_fornecedor:'servico',status:'ativo',contratos:1,contas:1},
+  {id:5,razao_social:'Papelaria Central Maranhão ME',nome_fantasia:'Papelaria Central',documento:'55666777000134',tipo_pessoa:'pj',tipo_fornecedor:'produto',status:'inativo',contratos:0,contas:0},
+  {id:6,razao_social:'Renata Vieira Consultoria',nome_fantasia:null,documento:'85471236390',tipo_pessoa:'pf',tipo_fornecedor:'servico',status:'ativo',contratos:1,contas:1}
+];
+
+const CONTAS_BANCARIAS = {
+  'colaborador-1':[{id:1,banco:'Itaú Unibanco',codigo:'341',agencia:'1234',conta:'56789-0',tipo_conta:'corrente',titular:'Marina Torres Albuquerque',doc:'52998224725',pix:{tipo:'cpf',valor:'529.982.247-25'},principal:true,status:'ativa'}],
+  'colaborador-2':[{id:2,banco:'Banco do Brasil',codigo:'001',agencia:'3321',conta:'88452-1',tipo_conta:'corrente',titular:'Diego Fontenele Lima',doc:'11144477735',pix:{tipo:'email',valor:'diego.lima@email.com'},principal:true,status:'ativa'}],
+  'colaborador-4':[{id:3,banco:'Nubank',codigo:'260',agencia:'0001',conta:'11234-5',tipo_conta:'corrente',titular:'Thiago Bandeira Cutrim',doc:'70212536408',pix:{tipo:'aleatoria',valor:'8f0a2e3c-...-91b2'},principal:true,status:'ativa'}],
+  'colaborador-5':[{id:4,banco:'Bradesco',codigo:'237',agencia:'4455',conta:'22013-9',tipo_conta:'poupanca',titular:'Larissa Moraes Coelho',doc:'38215490672',pix:null,principal:true,status:'ativa'}],
+  'colaborador-6':[{id:5,banco:'Caixa Econômica Federal',codigo:'104',agencia:'0512',conta:'00098765-3',tipo_conta:'corrente',titular:'Everton Sá Ribeiro',doc:'64789213055',pix:{tipo:'telefone',valor:'+55 98 99678-4411'},principal:true,status:'ativa'}],
+  'colaborador-8':[{id:6,banco:'Itaú Unibanco',codigo:'341',agencia:'1234',conta:'40012-2',tipo_conta:'corrente',titular:'Bruno Castro Muniz',doc:'45632178091',pix:null,principal:true,status:'inativa'}],
+  'fornecedor-1':[{id:7,banco:'Santander',codigo:'033',agencia:'2211',conta:'77321-4',tipo_conta:'corrente',titular:'Alpha Contabilidade e Assessoria Ltda',doc:'11222333000181',pix:{tipo:'cnpj',valor:'11.222.333/0001-81'},principal:true,status:'ativa'}],
+  'fornecedor-2':[{id:8,banco:'Banco do Brasil',codigo:'001',agencia:'3390',conta:'55123-0',tipo_conta:'corrente',titular:'Imobiliária Baía do Sol Ltda',doc:'22333444000199',pix:null,principal:true,status:'ativa'}],
+  'fornecedor-3':[{id:9,banco:'Itaú Unibanco',codigo:'341',agencia:'9988',conta:'12333-1',tipo_conta:'corrente',titular:'CloudStack Soluções em Nuvem S.A.',doc:'33444555000112',pix:{tipo:'cnpj',valor:'33.444.555/0001-12'},principal:true,status:'ativa'}],
+  'fornecedor-4':[{id:10,banco:'Sicoob',codigo:'756',agencia:'3001',conta:'44210-7',tipo_conta:'corrente',titular:'José Rocha Advocacia',doc:'44555666000123',pix:null,principal:true,status:'ativa'}],
+  'fornecedor-6':[{id:11,banco:'Nubank',codigo:'260',agencia:'0001',conta:'98221-0',tipo_conta:'corrente',titular:'Renata Vieira Consultoria',doc:'85471236390',pix:{tipo:'cpf',valor:'854.712.363-90'},principal:true,status:'ativa'}]
+};
+
+const PAGAMENTOS = [
+  {id:'PAG-2026-0842',descricao:'Salário — Agosto/2026',beneficiario:'Marina Torres Albuquerque',beneficiario_tipo:'colaborador',beneficiario_id:1,categoria:'Salário',competencia:'2026-08',data_vencimento:'2026-08-05',valor:7200,forma:'pix',status:'atrasado',data_pagamento:null,conta_destino:'Itaú Unibanco, Ag. 1234, C/C 56789-0'},
+  {id:'PAG-2026-0843',descricao:'Salário — Agosto/2026',beneficiario:'Diego Fontenele Lima',beneficiario_tipo:'colaborador',beneficiario_id:2,categoria:'Salário',competencia:'2026-08',data_vencimento:'2026-08-05',valor:8600,forma:'pix',status:'pago',data_pagamento:'2026-08-05',conta_destino:'Banco do Brasil, Ag. 3321, C/C 88452-1'},
+  {id:'PAG-2026-0844',descricao:'Salário — Agosto/2026',beneficiario:'Rebeca Nunes Serra',beneficiario_tipo:'colaborador',beneficiario_id:3,categoria:'Salário',competencia:'2026-08',data_vencimento:'2026-08-05',valor:9800,forma:'ted',status:'atrasado',data_pagamento:null,conta_destino:'Sem conta cadastrada'},
+  {id:'PAG-2026-0851',descricao:'Vale-transporte — Agosto',beneficiario:'Everton Sá Ribeiro',beneficiario_tipo:'colaborador',beneficiario_id:6,categoria:'Outros',competencia:'2026-08',data_vencimento:'2026-08-18',valor:420,forma:'pix',status:'atrasado',data_pagamento:null,conta_destino:'Caixa Econômica Federal, Ag. 0512, C/C 00098765-3'},
+  {id:'PAG-2026-0860',descricao:'Consultoria de implantação — parcela 4/6',beneficiario:'Thiago Bandeira Cutrim',beneficiario_tipo:'colaborador',beneficiario_id:4,categoria:'Prestação de serviço',competencia:'2026-08',data_vencimento:'2026-08-20',valor:11000,forma:'pix',status:'pendente',data_pagamento:null,conta_destino:'Nubank, Ag. 0001, C/C 11234-5'},
+  {id:'PAG-2026-0861',descricao:'Aluguel — Sala 302, Ed. Corporate',beneficiario:'Imobiliária Baía do Sol Ltda',beneficiario_tipo:'fornecedor',beneficiario_id:2,categoria:'Aluguel',competencia:'2026-08',data_vencimento:'2026-08-25',valor:6400,forma:'boleto',status:'agendado',data_pagamento:null,conta_destino:'Boleto — sem conta de destino'},
+  {id:'PAG-2026-0862',descricao:'Licença anual — Plataforma CloudStack',beneficiario:'CloudStack Soluções em Nuvem S.A.',beneficiario_tipo:'fornecedor',beneficiario_id:3,categoria:'Licença de software',competencia:'2026-08',data_vencimento:'2026-08-22',valor:18500,forma:'ted',status:'pendente',data_pagamento:null,conta_destino:'Itaú Unibanco, Ag. 9988, C/C 12333-1'},
+  {id:'PAG-2026-0863',descricao:'Honorários contábeis — Agosto',beneficiario:'Alpha Contabilidade e Assessoria Ltda',beneficiario_tipo:'fornecedor',beneficiario_id:1,categoria:'Contabilidade',competencia:'2026-08',data_vencimento:'2026-08-10',valor:3200,forma:'pix',status:'pago',data_pagamento:'2026-08-09',conta_destino:'Santander, Ag. 2211, C/C 77321-4'},
+  {id:'PAG-2026-0864',descricao:'Assessoria jurídica — contrato societário',beneficiario:'José Rocha Advocacia',beneficiario_tipo:'fornecedor',beneficiario_id:4,categoria:'Prestação de serviço',competencia:'2026-08',data_vencimento:'2026-08-29',valor:5000,forma:'ted',status:'agendado',data_pagamento:null,conta_destino:'Sicoob, Ag. 3001, C/C 44210-7'},
+  {id:'PAG-2026-0865',descricao:'Consultoria de marca — peças Febraban Tech',beneficiario:'Renata Vieira Consultoria',beneficiario_tipo:'fornecedor',beneficiario_id:6,categoria:'Prestação de serviço',competencia:'2026-08',data_vencimento:'2026-08-21',valor:2600,forma:'pix',status:'pendente',data_pagamento:null,conta_destino:'Nubank, Ag. 0001, C/C 98221-0'},
+  {id:'PAG-2026-0866',descricao:'Material de escritório — reposição trimestral',beneficiario:'Papelaria Central Maranhão ME',beneficiario_tipo:'fornecedor',beneficiario_id:5,categoria:'Outros',competencia:'2026-08',data_vencimento:'2026-08-14',valor:640,forma:'boleto',status:'cancelado',data_pagamento:null,conta_destino:'Fornecedor inativo — sem conta'},
+  {id:'PAG-2026-0801',descricao:'Salário — Julho/2026',beneficiario:'Marina Torres Albuquerque',beneficiario_tipo:'colaborador',beneficiario_id:1,categoria:'Salário',competencia:'2026-07',data_vencimento:'2026-07-05',valor:7200,forma:'pix',status:'pago',data_pagamento:'2026-07-05',conta_destino:'Itaú Unibanco, Ag. 1234, C/C 56789-0'},
+  {id:'PAG-2026-0802',descricao:'Reembolso — Passagem aérea Belém',beneficiario:'Everton Sá Ribeiro',beneficiario_tipo:'colaborador',beneficiario_id:6,categoria:'Reembolso',competencia:'2026-07',data_vencimento:'2026-07-18',valor:980,forma:'pix',status:'pago',data_pagamento:'2026-07-19',conta_destino:'Caixa Econômica Federal, Ag. 0512, C/C 00098765-3'},
+  {id:'PAG-2026-0803',descricao:'Rescisão contratual',beneficiario:'Bruno Castro Muniz',beneficiario_tipo:'colaborador',beneficiario_id:8,categoria:'Rescisão',competencia:'2026-07',data_vencimento:'2026-07-05',valor:14200,forma:'ted',status:'pago',data_pagamento:'2026-07-03',conta_destino:'Itaú Unibanco, Ag. 1234, C/C 40012-2'},
+  {id:'PAG-2026-0870',descricao:'Décimo terceiro — 1ª parcela adiantada',beneficiario:'Diego Fontenele Lima',beneficiario_tipo:'colaborador',beneficiario_id:2,categoria:'Décimo terceiro',competencia:'2026-08',data_vencimento:'2026-08-31',valor:4300,forma:'pix',status:'agendado',data_pagamento:null,conta_destino:'Banco do Brasil, Ag. 3321, C/C 88452-1'},
+  {id:'PAG-2026-0871',descricao:'Vale-alimentação — Agosto',beneficiario:'Larissa Moraes Coelho',beneficiario_tipo:'colaborador',beneficiario_id:5,categoria:'Outros',competencia:'2026-08',data_vencimento:'2026-08-05',valor:600,forma:'pix',status:'pago',data_pagamento:'2026-08-05',conta_destino:'Bradesco, Ag. 4455, C/C 22013-9'}
+];
+
+const HISTORICO_PAGAMENTO = {
+  'PAG-2026-0842':[
+    {de:null,para:'pendente',usuario:'Sistema',auto:true,quando:'2026-08-01T06:00',obs:'Gerado pela rotina de contratos recorrentes (5 dias antes do vencimento).'},
+    {de:'pendente',para:'atrasado',usuario:'Sistema',auto:true,quando:'2026-08-06T06:15',obs:'Vencido sem confirmação. Promovido pela rotina diária.'}
+  ],
+  'PAG-2026-0843':[
+    {de:null,para:'pendente',usuario:'Sistema',auto:true,quando:'2026-08-01T06:00',obs:null},
+    {de:'pendente',para:'pago',usuario:'Abisai Santos',auto:false,quando:'2026-08-05T09:42',obs:'Confirmado via internet banking Itaú, comprovante anexado.'}
+  ],
+  'PAG-2026-0862':[
+    {de:null,para:'pendente',usuario:'Rebeca Nunes Serra',auto:false,quando:'2026-08-02T14:10',obs:'Lançamento manual — renovação anual da licença.'}
+  ]
+};
+
+const REEMBOLSOS = [
+  {id:'REM-2026-0112',colaborador:'Everton Sá Ribeiro',departamento:'Operações',descricao:'Passagem aérea — visita técnica Belém',categoria:'viagem',valor:1240,data_solicitacao:'2026-08-14',status:'pendente'},
+  {id:'REM-2026-0111',colaborador:'Diego Fontenele Lima',departamento:'Engenharia',descricao:'Notebook — cabo adaptador USB-C',categoria:'material',valor:189,data_solicitacao:'2026-08-13',status:'aprovado'},
+  {id:'REM-2026-0110',colaborador:'Rebeca Nunes Serra',departamento:'Operações',descricao:'Almoço com fornecedor DeskCorp',categoria:'alimentacao',valor:312,data_solicitacao:'2026-08-11',status:'pago'},
+  {id:'REM-2026-0109',colaborador:'Marina Torres Albuquerque',departamento:'Financeiro',descricao:'Táxi — reunião Febraban Tech (prévia)',categoria:'transporte',valor:78,data_solicitacao:'2026-08-10',status:'rejeitado'},
+  {id:'REM-2026-0108',colaborador:'Camila Pestana Reis',departamento:'Marketing',descricao:'Impressão de material gráfico — flyers',categoria:'material',valor:540,data_solicitacao:'2026-08-08',status:'pago'},
+  {id:'REM-2026-0107',colaborador:'Larissa Moraes Coelho',departamento:'Produto',descricao:'Curso online — certificação',categoria:'outro',valor:410,data_solicitacao:'2026-08-05',status:'pendente'}
+];
+
+const CONTRATOS = [
+  {id:1,fornecedor:'CloudStack Soluções em Nuvem S.A.',categoria:'Licença de software',descricao:'Infraestrutura em nuvem — plano corporativo',tipo:'recorrente',valor:18500,periodicidade:'mensal',dia_vencimento:22,status:'ativo',proximo:'2026-09-22'},
+  {id:2,fornecedor:'Imobiliária Baía do Sol Ltda',categoria:'Aluguel',descricao:'Locação — Sala 302, Ed. Corporate',tipo:'recorrente',valor:6400,periodicidade:'mensal',dia_vencimento:25,status:'ativo',proximo:'2026-09-25'},
+  {id:3,fornecedor:'Alpha Contabilidade e Assessoria Ltda',categoria:'Contabilidade',descricao:'Honorários contábeis mensais',tipo:'recorrente',valor:3200,periodicidade:'mensal',dia_vencimento:10,status:'ativo',proximo:'2026-09-10'},
+  {id:4,fornecedor:'José Rocha Advocacia',categoria:'Prestação de serviço',descricao:'Assessoria jurídica societária',tipo:'pontual',valor:5000,periodicidade:null,dia_vencimento:null,status:'ativo',proximo:'2026-08-29'},
+  {id:5,fornecedor:'Renata Vieira Consultoria',categoria:'Prestação de serviço',descricao:'Consultoria de marca — campanha Febraban',tipo:'pontual',valor:2600,periodicidade:null,dia_vencimento:null,status:'encerrado',proximo:null}
+];
+
+const AUDITORIA = [
+  {id:1,quando:'2026-08-19T08:12',usuario:'Abisai Santos',modulo:'Pagamentos',descricao:'Alterou status de PAG-2026-0862',de:'—',para:'—',campos:[{c:'status',de:'pendente',para:'pendente'}]},
+  {id:2,quando:'2026-08-18T17:40',usuario:'Sistema',modulo:'Pagamentos',descricao:'Promoveu 3 lançamentos para Atrasado (rotina 06:15)',campos:[{c:'status',de:'pendente',para:'atrasado'}]},
+  {id:3,quando:'2026-08-18T11:05',usuario:'Rebeca Nunes Serra',modulo:'Reembolsos',descricao:'Aprovou REM-2026-0111',campos:[{c:'status',de:'pendente',para:'aprovado'}]},
+  {id:4,quando:'2026-08-17T15:22',usuario:'Marina Torres Albuquerque',modulo:'Colaboradores',descricao:'Atualizou dados cadastrais de Everton Sá Ribeiro',campos:[{c:'telefone',de:'(98) 99678-0000',para:'(98) 99678-4411'}]},
+  {id:5,quando:'2026-08-17T09:03',usuario:'Abisai Santos',modulo:'Fornecedores',descricao:'Inativou Papelaria Central Maranhão ME',campos:[{c:'status',de:'ativo',para:'inativo'}]},
+  {id:6,quando:'2026-08-16T14:51',usuario:'Sistema',modulo:'Contratos',descricao:'Gerou lançamento a partir do contrato #1 (CloudStack)',campos:[{c:'pagamento',de:'—',para:'PAG-2026-0862'}]},
+  {id:7,quando:'2026-08-14T10:30',usuario:'Everton Sá Ribeiro',modulo:'Reembolsos',descricao:'Solicitou REM-2026-0112',campos:[]},
+  {id:8,quando:'2026-08-10T09:42',usuario:'Abisai Santos',modulo:'Pagamentos',descricao:'Confirmou PAG-2026-0843',campos:[{c:'status',de:'pendente',para:'pago'},{c:'data_pagamento',de:'—',para:'05/08/2026'}]}
+];
+
+const USUARIOS = [
+  {id:1,nome:'Abisai Santos',email:'abisai.santos@corebanx.com',perfil:'administrador',colaborador:null,status:'ativo'},
+  {id:2,nome:'Marina Torres Albuquerque',email:'marina.torres@corebanx.com',perfil:'financeiro',colaborador:'Marina Torres Albuquerque',status:'ativo'},
+  {id:3,nome:'Rebeca Nunes Serra',email:'rebeca.serra@corebanx.com',perfil:'financeiro',colaborador:'Rebeca Nunes Serra',status:'ativo'},
+  {id:4,nome:'Diego Fontenele Lima',email:'diego.lima@corebanx.com',perfil:'leitura',colaborador:'Diego Fontenele Lima',status:'ativo'},
+  {id:5,nome:'Everton Sá Ribeiro',email:'everton.ribeiro@corebanx.com',perfil:'gestor',colaborador:'Everton Sá Ribeiro',status:'inativo'}
+];
+
+
+/* ============================================================
+   Application/prototype state + navigation shell
+   ============================================================ */
+const state = {
+  screen:'dashboard',
+  param:null,
+  viewport:'desktop', // desktop | mobile
+  drawerOpen:false,
+  modal:null, // {type, param}
+  toasts:[],
+  selectedTransition:null,
+  history:['dashboard']
+};
+
+const NAV_ITEMS = [
+  {key:'dashboard', label:'Dashboard', ic:'home'},
+  {key:'pagamentos-lista', label:'Pagamentos', ic:'wallet', group:['pagamentos-lista','pagamento-detalhe','pagamento-form']},
+  {key:'reembolsos-lista', label:'Reembolsos', ic:'receipt', group:['reembolsos-lista','reembolso-detalhe']},
+  {key:'colaboradores-lista', label:'Colaboradores', ic:'users', group:['colaboradores-lista','colaborador-detalhe','colaborador-form']},
+  {key:'fornecedores-lista', label:'Fornecedores', ic:'briefcase', group:['fornecedores-lista','fornecedor-detalhe']},
+  {key:'contratos-lista', label:'Contratos', ic:'file', group:['contratos-lista']},
+  {key:'categorias-lista', label:'Categorias', ic:'tags', group:['categorias-lista']},
+  {key:'relatorios', label:'Relatórios', ic:'chart', group:['relatorios']},
+  {key:'auditoria', label:'Auditoria', ic:'history', group:['auditoria']}
+];
+
+/* Full 40-item inventory from the briefing (section 11), mapped to renderable screen keys
+   where built, or null where represented by the EmConstrucao placeholder. */
+const SCREEN_INDEX = [
+  {n:1,p:1,g:'Núcleo operacional',t:'Casca — sidebar expandida',key:'dashboard'},
+  {n:2,p:1,g:'Núcleo operacional',t:'Casca — drawer mobile',key:'dashboard',forceMobile:true,forceDrawer:true},
+  {n:3,p:1,g:'Núcleo operacional',t:'Pagamentos — listagem',key:'pagamentos-lista'},
+  {n:4,p:1,g:'Núcleo operacional',t:'Pagamento — detalhe',key:'pagamento-detalhe',param:'PAG-2026-0842'},
+  {n:5,p:1,g:'Núcleo operacional',t:'Pagamento — modal de confirmação',key:'pagamento-detalhe',param:'PAG-2026-0842',modal:'confirmar'},
+  {n:6,p:1,g:'Núcleo operacional',t:'Pagamento — modal de mudança de status',key:'pagamento-detalhe',param:'PAG-2026-0842',modal:'status'},
+  {n:7,p:1,g:'Núcleo operacional',t:'Pagamento — formulário',key:'pagamento-form'},
+  {n:8,p:1,g:'Núcleo operacional',t:'Dashboard',key:'dashboard'},
+  {n:9,p:2,g:'Reembolsos e cadastros',t:'Reembolsos — listagem',key:'reembolsos-lista'},
+  {n:10,p:2,g:'Reembolsos e cadastros',t:'Reembolso — detalhe',key:'reembolso-detalhe',param:'REM-2026-0112'},
+  {n:11,p:2,g:'Reembolsos e cadastros',t:'Reembolso — formulário',key:'reembolso-form'},
+  {n:12,p:2,g:'Reembolsos e cadastros',t:'Reembolso — modal de rejeição',key:'reembolso-detalhe',param:'REM-2026-0112',modal:'rejeitar'},
+  {n:13,p:2,g:'Reembolsos e cadastros',t:'Colaboradores — listagem',key:'colaboradores-lista'},
+  {n:14,p:2,g:'Reembolsos e cadastros',t:'Colaborador — detalhe',key:'colaborador-detalhe',param:1},
+  {n:15,p:2,g:'Reembolsos e cadastros',t:'Colaborador — formulário',key:'colaborador-form'},
+  {n:16,p:2,g:'Reembolsos e cadastros',t:'Colaborador — modal de desligamento',key:'colaborador-detalhe',param:1,modal:'desligar'},
+  {n:17,p:2,g:'Reembolsos e cadastros',t:'Painel de contas bancárias',key:'colaborador-detalhe',param:1},
+  {n:18,p:2,g:'Reembolsos e cadastros',t:'Modal de conta bancária/Pix',key:'colaborador-detalhe',param:1,modal:'conta'},
+  {n:19,p:2,g:'Reembolsos e cadastros',t:'Fornecedores — listagem',key:'fornecedores-lista'},
+  {n:20,p:2,g:'Reembolsos e cadastros',t:'Fornecedor — detalhe',key:'fornecedor-detalhe',param:1},
+  {n:21,p:2,g:'Reembolsos e cadastros',t:'Fornecedor — formulário',key:'fornecedor-form'},
+  {n:22,p:3,g:'Contratos, categorias e relatórios',t:'Contratos — listagem',key:'contratos-lista'},
+  {n:23,p:3,g:'Contratos, categorias e relatórios',t:'Contrato — detalhe',key:'contrato-detalhe',param:1},
+  {n:24,p:3,g:'Contratos, categorias e relatórios',t:'Contrato — formulário',key:'contrato-form'},
+  {n:25,p:3,g:'Contratos, categorias e relatórios',t:'Categorias — listagem',key:'categorias-lista'},
+  {n:26,p:3,g:'Contratos, categorias e relatórios',t:'Categoria — formulário',key:'categorias-lista',modal:'categoria'},
+  {n:27,p:3,g:'Contratos, categorias e relatórios',t:'Relatórios',key:'relatorios'},
+  {n:28,p:3,g:'Contratos, categorias e relatórios',t:'Relatórios — modal de exportação',key:'relatorios',modal:'exportar'},
+  {n:29,p:3,g:'Contratos, categorias e relatórios',t:'Auditoria',key:'auditoria'},
+  {n:30,p:3,g:'Contratos, categorias e relatórios',t:'Componente de anexos',key:'pagamento-detalhe',param:'PAG-2026-0842'},
+  {n:31,p:4,g:'Acesso e sistema',t:'Login',key:'login'},
+  {n:32,p:4,g:'Acesso e sistema',t:'Esqueci a senha',key:'esqueci-senha'},
+  {n:33,p:4,g:'Acesso e sistema',t:'Redefinir senha',key:'redefinir-senha'},
+  {n:34,p:4,g:'Acesso e sistema',t:'Confirmar senha',key:'confirmar-senha'},
+  {n:35,p:4,g:'Acesso e sistema',t:'Verificar e-mail',key:'verificar-email'},
+  {n:36,p:4,g:'Acesso e sistema',t:'Meu perfil',key:'meu-perfil'},
+  {n:37,p:4,g:'Acesso e sistema',t:'Usuários — listagem e formulário',key:'usuarios-lista'},
+  {n:38,p:4,g:'Acesso e sistema',t:'Erro 403 — sem permissão',key:'erro-403'},
+  {n:39,p:4,g:'Acesso e sistema',t:'Erro 404',key:'erro-404'},
+  {n:40,p:4,g:'Acesso e sistema',t:'Estados vazios do primeiro uso',key:'estados'}
+];
+const BUILT_KEYS = new Set(['dashboard','mobile-shell','pagamentos-lista','pagamento-detalhe','pagamento-form',
+  'reembolsos-lista','reembolso-detalhe','reembolso-form','colaboradores-lista','colaborador-detalhe','colaborador-form',
+  'fornecedores-lista','fornecedor-detalhe','fornecedor-form','contratos-lista','contrato-detalhe','contrato-form',
+  'categorias-lista','relatorios','auditoria','login','usuarios-lista','erro-403','erro-404','estados','meu-perfil',
+  'esqueci-senha','redefinir-senha','confirmar-senha','verificar-email','prototype-index']);
+
+function currentUser(){ return {nome:'Abisai Santos', perfil:'Financeiro'}; }
+
+function go(screen, param){
+  state.screen = screen; state.param = param; state.modal = null; state.selectedTransition = null;
+  state.drawerOpen = false;
+  state.history.push(screen);
+  window.scrollTo(0,0);
+  render();
+}
+function openModal(type, param){ state.modal = {type, param}; state.selectedTransition = null; render(); }
+function closeModal(){ state.modal = null; render(); }
+function toggleDrawer(){ state.drawerOpen = !state.drawerOpen; render(); }
+function setViewport(v){ state.viewport = v; state.drawerOpen=false; render(); }
+function pushToast(kind, text){
+  const id = Date.now();
+  state.toasts.push({id, kind, text});
+  render();
+  setTimeout(()=>{ state.toasts = state.toasts.filter(t=>t.id!==id); render(); }, kind==='error'?6000:4000);
+}
+function jumpToIndexEntry(entry){
+  state.screen = entry.key; state.param = entry.param || null; state.modal = entry.modal ? {type:entry.modal, param:entry.param} : null;
+  state.selectedTransition = null;
+  if(entry.forceMobile){ state.viewport='mobile'; }
+  state.drawerOpen = !!entry.forceDrawer;
+  render();
+}
+function selectFromIndex(n){
+  const entry = SCREEN_INDEX.find(e=>e.n===n);
+  if(entry) jumpToIndexEntry(entry);
+}
+function stepIndex(dir){
+  const key = state.screen;
+  let idx = SCREEN_INDEX.findIndex(e=>e.key===key && (!state.modal || e.modal===state.modal.type));
+  if(idx===-1) idx = SCREEN_INDEX.findIndex(e=>e.key===key);
+  if(idx===-1) idx = 0;
+  let next = idx + dir;
+  if(next<0) next = SCREEN_INDEX.length-1;
+  if(next>=SCREEN_INDEX.length) next = 0;
+  jumpToIndexEntry(SCREEN_INDEX[next]);
+}
+
+
+/* ============================================================
+   Shell: sidebar + topbar + content wrapper
+   ============================================================ */
+function sidebarHtml2(){
+  const daily = NAV_ITEMS.slice(0,3);
+  const registries = NAV_ITEMS.slice(3,7);
+  const analysis = NAV_ITEMS.slice(7);
+  const item = (it)=>{
+    const active = it.group ? it.group.includes(state.screen) : it.key===state.screen;
+    return `<button class="nav-item ${active?'active':''}" onclick="go('${it.key}')">${icon(it.ic,17)}${it.label}</button>`;
+  };
+  return `
+  <aside class="sidebar ${state.drawerOpen?'open':''}">
+    <div class="sidebar-logo">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="8" fill="#F37B46"/><path d="M8 21V9h6.2c3 0 4.8 1.7 4.8 4.4 0 2.7-1.9 4.4-4.9 4.4H11v3.2H8Zm3-5.7h2.9c1.3 0 2.1-.7 2.1-1.9 0-1.2-.8-1.9-2.1-1.9H11v3.8Z" fill="#fff"/></svg>
+      <div class="sidebar-logo-text">PayrollOS<small>Corebanx</small></div>
+    </div>
+    <div class="nav-group-label">Operação diária</div>
+    ${daily.map(item).join('')}
+    <div class="nav-group-label">Cadastros</div>
+    ${registries.map(item).join('')}
+    <div class="nav-group-label">Análise</div>
+    ${analysis.map(item).join('')}
+    <div class="sidebar-spacer"></div>
+    <button class="nav-item" onclick="go('prototype-index')">${icon('menu',17)}Índice do protótipo</button>
+    <div class="sidebar-footnote">Sistema de controle. Não executa pagamentos.</div>
+  </aside>
+  <div class="sidebar-scrim ${state.drawerOpen?'open':''}" onclick="toggleDrawer()"></div>`;
+}
+
+function topbarHtml(title, desc, actionsHtml){
+  const u = currentUser();
+  return `
+  <header class="topbar">
+    <button class="hamburger" onclick="toggleDrawer()">${icon('menu',20)}</button>
+    <div class="topbar-titles">
+      <h1>${title}</h1>
+      ${desc?`<p>${desc}</p>`:''}
+    </div>
+    <div class="topbar-actions">
+      ${actionsHtml||''}
+      <button class="btn-ghost" style="padding:8px;border-radius:8px;" title="Notificações">${icon('bell',18)}</button>
+      <div class="user-menu">
+        <div class="avatar">${initials(u.nome)}</div>
+        <div class="user-meta"><div class="name">${u.nome}</div><div class="role">${u.perfil}</div></div>
+        <button class="btn-ghost" style="padding:6px;" title="Sair">${icon('chevronDown',15)}</button>
+      </div>
+    </div>
+  </header>`;
+}
+
+function shell(title, desc, actionsHtml, bodyHtml, opts){
+  opts = opts || {};
+  return `
+  <div class="app-shell">
+    ${sidebarHtml2()}
+    <div class="main-col">
+      ${topbarHtml(title, desc, actionsHtml)}
+      <div class="content ${opts.narrow?'content-narrow':''}">${bodyHtml}</div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   Root render + modal + toast overlay
+   ============================================================ */
+function render(){
+  const root = document.getElementById('app-root');
+  const device = document.getElementById('device');
+  device.className = 'device ' + (state.viewport==='mobile' ? 'mobile' : '');
+  root.innerHTML = screenHtml() + modalHtml() + toastHtml();
+  renderProtoTopbar();
+}
+
+function screenHtml(){
+  const fn = SCREENS[state.screen];
+  if(fn) return fn(state.param);
+  return screenEmConstrucao(state.screen);
+}
+
+function modalHtml(){
+  if(!state.modal) return '';
+  const fn = MODALS[state.modal.type];
+  if(!fn) return '';
+  return `<div class="modal-scrim" onclick="if(event.target===this) closeModal()">${fn(state.modal.param)}</div>`;
+}
+
+function toastHtml(){
+  if(!state.toasts.length) return '';
+  return `<div class="toast-stack">${state.toasts.map(t=>`
+    <div class="toast ${t.kind}">${icon(t.kind==='error'?'alertOctagon':'checkCircle',17)}<div>${t.text}</div></div>
+  `).join('')}</div>`;
+}
+
+
+/* ============================================================
+   SCREEN: Dashboard
+   ============================================================ */
+function screenDashboard(){
+  const comp = '2026-08';
+  const aberto = PAGAMENTOS.filter(p=>['pendente','agendado','atrasado'].includes(p.status) && p.competencia===comp);
+  const aPagar = aberto.reduce((s,p)=>s+p.valor,0);
+  const pago = PAGAMENTOS.filter(p=>p.status==='pago' && p.competencia===comp).reduce((s,p)=>s+p.valor,0);
+  const atrasadosArr = PAGAMENTOS.filter(p=>p.status==='atrasado');
+  const atrasadosVal = atrasadosArr.reduce((s,p)=>s+p.valor,0);
+  const remPend = REEMBOLSOS.filter(r=>r.status==='pendente');
+  const remPendVal = remPend.reduce((s,r)=>s+r.valor,0);
+
+  const proximos = PAGAMENTOS
+    .filter(p=>['pendente','agendado','atrasado'].includes(p.status))
+    .sort((a,b)=>a.data_vencimento.localeCompare(b.data_vencimento))
+    .slice(0,10);
+
+  const porCategoria = {};
+  aberto.forEach(p=>{ porCategoria[p.categoria]=(porCategoria[p.categoria]||0)+p.valor; });
+  const catEntries = Object.entries(porCategoria).sort((a,b)=>b[1]-a[1]);
+  const catMax = catEntries.length ? catEntries[0][1] : 1;
+
+  const body = `
+    <p class="kicker">Visão do mês corrente · Agosto 2026</p>
+    <h2 class="pagetitle" style="margin-bottom:2px;">Olá, ${currentUser().nome.split(' ')[0]}</h2>
+    <p class="pagedesc">Panorama de pagamentos, atrasos e reembolsos. Atualizado às 06:15, após a rotina diária de vencimentos.</p>
+
+    <div class="indicators">
+      <div class="indicator-card">
+        <div class="indicator-top"><span class="indicator-label">A pagar no mês</span><div class="indicator-icon">${icon('wallet',16)}</div></div>
+        <div class="indicator-value">${money(aPagar)}</div>
+        <div class="indicator-detail">Pendentes, agendados e atrasados</div>
+      </div>
+      <div class="indicator-card">
+        <div class="indicator-top"><span class="indicator-label">Pago no mês</span><div class="indicator-icon">${icon('checkCircle',16)}</div></div>
+        <div class="indicator-value">${money(pago)}</div>
+        <div class="indicator-detail">Confirmado manualmente</div>
+      </div>
+      <div class="indicator-card ${atrasadosArr.length>0?'alert':''}">
+        <div class="indicator-top"><span class="indicator-label">Atrasados</span><div class="indicator-icon">${icon('alertTriangle',16)}</div></div>
+        <div class="indicator-value">${money(atrasadosVal)}</div>
+        <div class="indicator-detail">${atrasadosArr.length} lançamento(s) vencido(s)</div>
+      </div>
+      <div class="indicator-card">
+        <div class="indicator-top"><span class="indicator-label">Reembolsos pendentes</span><div class="indicator-icon">${icon('receipt',16)}</div></div>
+        <div class="indicator-value">${money(remPendVal)}</div>
+        <div class="indicator-detail">${remPend.length} solicitação(ões)</div>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="card">
+        <div class="card-header"><h2>Próximos vencimentos</h2><span class="hint">Próximos 7 dias</span></div>
+        <div class="table-wrap"><table class="grid">
+          <thead><tr><th>Descrição</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th></tr></thead>
+          <tbody>
+            ${proximos.map(p=>`
+              <tr class="clickable" onclick="go('pagamento-detalhe','${p.id}')">
+                <td><div class="cell-primary link">${p.descricao}</div><div class="cell-sub">${p.beneficiario}</div></td>
+                <td class="mono">${dateBR(p.data_vencimento)}<div class="cell-sub">${relativeDue(p.data_vencimento)}</div></td>
+                <td class="num cell-money">${money(p.valor)}</td>
+                <td>${chip(STATUS_PAGAMENTO,p.status)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:14.5px;margin:0 0 14px;font-weight:600;">Em aberto por categoria</h2>
+        ${catEntries.map(([nome,total])=>`
+          <div class="prop-row">
+            <div class="prop-top"><span class="pname">${nome}</span><span class="pval">${money(total)}</span></div>
+            <div class="prop-track"><div class="prop-fill" style="width:${Math.round(total/catMax*100)}%"></div></div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  return shell('Dashboard','Panorama de pagamentos do mês corrente', `
+      <button class="btn btn-secondary" onclick="go('relatorios')">${icon('chart',16)}<span class="lbl">Ver relatórios</span></button>
+      <button class="btn btn-primary" onclick="go('pagamento-form')">${icon('plus',16)}<span class="lbl">Lançar pagamento</span></button>
+    `, body);
+}
+
+
+/* ============================================================
+   SCREEN: Pagamentos — listagem
+   ============================================================ */
+function screenPagamentosLista(){
+  const emAberto = PAGAMENTOS.filter(p=>['pendente','agendado','atrasado'].includes(p.status)).reduce((s,p)=>s+p.valor,0);
+  const atrasado = PAGAMENTOS.filter(p=>p.status==='atrasado').reduce((s,p)=>s+p.valor,0);
+  const rows = PAGAMENTOS.slice(0,14);
+
+  const body = `
+    <div class="totals-row">
+      <div class="total-pill"><span class="tp-label">Em aberto</span><span class="tp-value">${money(emAberto)}</span></div>
+      <div class="total-pill alert"><span class="tp-label">Atrasado</span><span class="tp-value">${money(atrasado)}</span></div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="field-control field-search">${icon('search',15)}<input placeholder="Buscar por descrição…"></div>
+      <div class="field-control field-select">${icon('filter',14)}<select><option>Status — todos</option>
+        ${Object.entries(STATUS_PAGAMENTO).map(([k,v])=>`<option>${v.label}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Categoria — todas</option>${CATEGORIAS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+      <div class="field-control field-date">${icon('calendar',14)}<input placeholder="Vence de"></div>
+      <div class="field-control field-date">${icon('calendar',14)}<input placeholder="Vence até"></div>
+      <button class="btn-clear-filters">${icon('x',13)}Limpar filtros</button>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr>
+          <th>Descrição</th><th>Categoria</th><th>Vencimento</th><th class="num">Valor</th><th>Forma</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(p=>{
+            const overdueUnconfirmed = p.status==='pendente' && p.data_vencimento < '2026-08-19';
+            return `
+            <tr class="clickable ${p.status==='atrasado'||overdueUnconfirmed?'row-overdue':''}" onclick="go('pagamento-detalhe','${p.id}')">
+              <td><div class="cell-primary link">${p.descricao}</div><div class="cell-sub">${p.beneficiario}</div></td>
+              <td>${p.categoria}<div class="cell-sub">${competenciaFmt(p.competencia)}</div></td>
+              <td class="mono">${dateBR(p.data_vencimento)}</td>
+              <td class="num cell-money">${money(p.valor)}</td>
+              <td>${FORMA_PAGAMENTO[p.forma]}</td>
+              <td>${chip(STATUS_PAGAMENTO,p.status)}${p.data_pagamento?`<div class="cell-sub mono">${dateBR(p.data_pagamento)}</div>`:''}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>
+      <div class="pagination">
+        <div class="p-info">Mostrando 1–14 de ${PAGAMENTOS.length}</div>
+        <div class="p-pages"><button class="active">1</button><button>2</button>${icon('chevronRight',15)}</div>
+        <div class="p-size">Por página <select><option>20</option><option>50</option><option>100</option></select></div>
+      </div>
+    </div>
+  `;
+  return shell('Pagamentos','Folha, fornecedores, prestadores e reembolsos em um único fluxo de controle', `
+      <button class="btn btn-secondary" onclick="go('relatorios')">${icon('download',16)}<span class="lbl">Exportar</span></button>
+      <button class="btn btn-primary" onclick="go('pagamento-form')">${icon('plus',16)}<span class="lbl">Lançar pagamento</span></button>
+    `, body);
+}
+
+/* ============================================================
+   SCREEN: Pagamento — detalhe
+   ============================================================ */
+function screenPagamentoDetalhe(id){
+  const p = PAGAMENTOS.find(x=>x.id===id) || PAGAMENTOS[0];
+  const hist = HISTORICO_PAGAMENTO[p.id] || [{de:null,para:p.status,usuario:'Sistema',auto:true,quando:'2026-08-01T06:00',obs:null}];
+  const transicoes = TRANSICOES_PAGAMENTO[p.status] || [];
+
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('pagamentos-lista')">${icon('chevronLeft',15)}Voltar para pagamentos</button>
+    <div class="detail-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div><h2 style="font-size:16px;">${p.descricao}</h2><span class="hint mono">${p.id}</span></div>
+            ${chip(STATUS_PAGAMENTO,p.status,14)}
+          </div>
+          <div class="card-pad">
+            <dl class="dl">
+              <div class="dl-item"><dt>Beneficiário</dt><dd>${p.beneficiario} <span style="color:var(--ink-55);font-weight:400;">(${p.beneficiario_tipo==='colaborador'?'Colaborador':'Fornecedor'})</span></dd></div>
+              <div class="dl-item"><dt>Categoria</dt><dd>${p.categoria}</dd></div>
+              <div class="dl-item"><dt>Competência</dt><dd class="mono">${competenciaFmt(p.competencia)}</dd></div>
+              <div class="dl-item"><dt>Vencimento</dt><dd class="mono">${dateBR(p.data_vencimento)} <span style="color:var(--ink-55);font-weight:400;">(${relativeDue(p.data_vencimento)})</span></dd></div>
+              <div class="dl-item"><dt>Valor</dt><dd class="mono" style="font-size:15.5px;">${money(p.valor)}</dd></div>
+              <div class="dl-item"><dt>Forma de pagamento</dt><dd>${FORMA_PAGAMENTO[p.forma]}</dd></div>
+              <div class="dl-item"><dt>Conta de destino</dt><dd>${p.conta_destino}</dd></div>
+              <div class="dl-item"><dt>Data de pagamento</dt><dd class="mono">${p.data_pagamento?dateBR(p.data_pagamento):'—'}</dd></div>
+            </dl>
+          </div>
+          <div class="form-footer" style="justify-content:flex-start;flex-wrap:wrap;">
+            ${p.status!=='cancelado' && p.status!=='pago' ? `<button class="btn btn-primary" onclick="openModal('confirmar','${p.id}')">${icon('checkCircle',16)}Confirmar pagamento</button>`:''}
+            ${transicoes.length ? `<button class="btn btn-secondary" onclick="openModal('status','${p.id}')">${icon('refresh',16)}Mudar status</button>`:''}
+            <button class="btn btn-ghost" onclick="go('pagamento-form')">${icon('edit',16)}Editar lançamento</button>
+            <button class="btn btn-danger-text" onclick="pushToast('success','Lançamento cancelado (simulação de protótipo).')">${icon('trash',16)}Cancelar</button>
+          </div>
+        </div>
+
+        <div class="card card-pad">
+          <h2 class="section-title" style="margin-bottom:14px;">Anexos</h2>
+          <div class="account-item" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:10px;align-items:center;">
+              ${icon('paperclip',18,'')}
+              <div><div style="font-weight:600;font-size:13px;">comprovante-pix-ago26.pdf</div><div class="cell-sub">Enviado por Abisai Santos · 05/08/2026</div></div>
+            </div>
+            <button class="btn btn-ghost btn-sm">${icon('download',15)}</button>
+          </div>
+          <label class="btn btn-secondary btn-sm" style="margin-top:12px;">${icon('upload',15)}Anexar comprovante</label>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <h2 class="section-title">Linha do tempo</h2>
+        <div class="timeline">
+          ${hist.map(h=>`
+            <div class="timeline-item">
+              <div class="timeline-dot ${h.auto?'auto':''}" style="color:var(--${STATUS_PAGAMENTO[h.para].sev==='secondary'?'secondary':STATUS_PAGAMENTO[h.para].sev})">${icon(STATUS_PAGAMENTO[h.para].ic,11)}</div>
+              <div class="timeline-head">${h.de?`${STATUS_PAGAMENTO[h.de].label} → `:''}${STATUS_PAGAMENTO[h.para].label} ${h.auto?`<span class="auto-tag">Automático</span>`:''}</div>
+              <div class="timeline-meta">${h.usuario} · ${dateTimeBR(h.quando)}</div>
+              ${h.obs?`<div class="timeline-note">${h.obs}</div>`:''}
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  return shell('Pagamento', p.id, '', body);
+}
+
+
+/* ============================================================
+   SCREEN: Pagamento — formulário (lançamento)
+   ============================================================ */
+function screenPagamentoForm(){
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('pagamentos-lista')">${icon('chevronLeft',15)}Voltar para pagamentos</button>
+
+    <div class="banner">${icon('info',16)}<div><b>Este formulário não move dinheiro.</b> Ele registra a intenção de pagamento. A confirmação, feita depois pelo internet banking, é uma etapa separada.</div></div>
+
+    <div class="card form-card">
+      <h3>Beneficiário</h3>
+      <p class="form-card-hint">O tipo escolhido filtra a busca abaixo — e a conta de destino, mais adiante, mostra só as contas ativas dele.</p>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>Tipo de beneficiário <span class="req">●</span></label>
+          <div class="toggle-group">
+            <button class="active">${icon('users',15)}Colaborador</button>
+            <button>${icon('briefcase',15)}Fornecedor</button>
+          </div>
+        </div>
+        <div class="field span-2">
+          <label>Beneficiário <span class="req">●</span></label>
+          <div class="field-control">${icon('search',15)}<input placeholder="Buscar colaborador ativo…" value="Marina Torres Albuquerque"></div>
+          <span class="field-hint linked">Filtrado por: Colaborador · somente ativos</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card form-card">
+      <h3>Dados do lançamento</h3>
+      <div class="form-grid">
+        <div class="field">
+          <label>Categoria <span class="req">●</span></label>
+          <select class="input"><option>Salário</option>${CATEGORIAS.filter(c=>c.nome!=='Salário').map(c=>`<option>${c.nome}</option>`).join('')}</select>
+        </div>
+        <div class="field">
+          <label>Contrato</label>
+          <select class="input"><option>Nenhum — lançamento avulso</option></select>
+          <span class="field-hint">Preenchido automaticamente quando gerado por contrato</span>
+        </div>
+        <div class="field span-2">
+          <label>Descrição <span class="req">●</span></label>
+          <input class="input" value="Salário — Agosto/2026" maxlength="255">
+        </div>
+        <div class="field">
+          <label>Valor <span class="req">●</span></label>
+          <input class="input input-money" value="R$ 7.200,00">
+        </div>
+        <div class="field">
+          <label>Data de vencimento <span class="req">●</span></label>
+          <div class="field-control">${icon('calendar',15)}<input value="05/09/2026"></div>
+        </div>
+        <div class="field">
+          <label>Competência</label>
+          <div class="field-control">${icon('calendar',15)}<input value="Set/2026"></div>
+        </div>
+        <div class="field">
+          <label>Forma de pagamento <span class="req">●</span></label>
+          <select class="input"><option>Pix</option><option>TED</option><option>Boleto</option><option>Dinheiro</option><option>Outro</option></select>
+        </div>
+        <div class="field">
+          <label>Conta de destino <span style="color:var(--danger);font-weight:700;">●</span></label>
+          <select class="input"><option>Itaú Unibanco · Ag. 1234 · C/C 56789-0 (Principal)</option></select>
+          <span class="field-hint linked">Obrigatório para Pix e TED · só contas ativas de Marina Torres Albuquerque</span>
+        </div>
+        <div class="field">
+          <label>Status inicial</label>
+          <select class="input"><option>Pendente</option><option>Agendado</option></select>
+          <span class="field-hint">Nada nasce pago — só Pendente ou Agendado</span>
+        </div>
+        <div class="field span-2">
+          <label>Observações</label>
+          <textarea class="input" rows="3" maxlength="5000"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-footer">
+        <button class="btn btn-secondary" onclick="go('pagamentos-lista')">Cancelar</button>
+        <button class="btn btn-primary" onclick="pushToast('success','Pagamento lançado como Pendente.')">${icon('checkCircle',16)}Lançar pagamento</button>
+      </div>
+    </div>
+  `;
+  return shell('Lançar pagamento','Registro de folha, fornecedor, prestador ou reembolso', '', body, {narrow:true});
+}
+
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+function modalConfirmar(id){
+  const p = PAGAMENTOS.find(x=>x.id===id) || PAGAMENTOS[0];
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><h3>Confirmar pagamento</h3><p>${p.descricao} · ${money(p.valor)}</p></div>
+      <button class="close-x" onclick="closeModal()">${icon('x',18)}</button>
+    </div>
+    <div class="modal-body">
+      <div class="banner">${icon('info',15)}<div>Isto registra que o pagamento já foi feito por fora, pelo internet banking. Nenhuma transferência é disparada por aqui.</div></div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>Data de pagamento <span class="req">●</span></label>
+        <div class="field-control">${icon('calendar',15)}<input value="19/08/2026"></div>
+        <span class="field-hint">Não pode ser uma data futura</span>
+      </div>
+      <div class="field">
+        <label>Observação</label>
+        <textarea class="input" rows="3" placeholder="Ex.: comprovante Itaú anexado, pago via Pix"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();pushToast('success','Pagamento registrado como Pago.')">${icon('checkCircle',16)}Registrar como pago</button>
+    </div>
+  </div>`;
+}
+
+function modalStatus(id){
+  const p = PAGAMENTOS.find(x=>x.id===id) || PAGAMENTOS[0];
+  const opts = TRANSICOES_PAGAMENTO[p.status] || [];
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><h3>Mudar status</h3><p>${p.descricao} · atual: ${STATUS_PAGAMENTO[p.status].label}</p></div>
+      <button class="close-x" onclick="closeModal()">${icon('x',18)}</button>
+    </div>
+    <div class="modal-body">
+      <p class="field-hint" style="margin:0 0 12px;">Só são exibidas as transições permitidas para este pagamento.</p>
+      <div class="transition-options">
+        ${opts.map((s,i)=>`
+          <button class="transition-opt ${i===0?'selected':''}" onclick="document.querySelectorAll('.transition-opt').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
+            ${icon(STATUS_PAGAMENTO[s].ic,17)}<span class="to-label">${STATUS_PAGAMENTO[s].label}</span>${chip(STATUS_PAGAMENTO,s)}
+          </button>`).join('')}
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Observação</label>
+        <textarea class="input" rows="2" placeholder="Opcional — fica registrado na linha do tempo"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();pushToast('success','Status atualizado.')">Salvar mudança</button>
+    </div>
+  </div>`;
+}
+
+function modalDesligar(id){
+  const c = COLABORADORES.find(x=>x.id===Number(id)) || COLABORADORES[0];
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><h3>Desligar colaborador</h3><p>${c.nome}</p></div>
+      <button class="close-x" onclick="closeModal()">${icon('x',18)}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;">
+        <label>Data de desligamento <span class="req">●</span></label>
+        <div class="field-control">${icon('calendar',15)}<input value="19/08/2026"></div>
+        <span class="field-hint">Não pode ser anterior à admissão (${dateBR(c.data_admissao)})</span>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>Observações</label>
+        <textarea class="input" rows="3"></textarea>
+      </div>
+      <div class="banner warn">${icon('alertTriangle',15)}<div>Após confirmar, novos lançamentos de folha ficam bloqueados para este colaborador. O histórico de pagamentos é mantido. Rescisão, se houver, deve ser lançada como pagamento avulso.</div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();pushToast('success','Colaborador desligado. Histórico preservado.')">Confirmar desligamento</button>
+    </div>
+  </div>`;
+}
+
+function modalConta(){
+  return `
+  <div class="modal modal-wide" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><h3>Conta bancária / chave Pix</h3><p>Compartilhada entre colaborador e fornecedor</p></div>
+      <button class="close-x" onclick="closeModal()">${icon('x',18)}</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="field"><label>Banco <span class="req">●</span></label><input class="input" value="Itaú Unibanco"></div>
+        <div class="field"><label>Código</label><input class="input" value="341" maxlength="5"></div>
+        <div class="field"><label>Agência <span class="req">●</span></label><input class="input" value="1234"></div>
+        <div class="field"><label>Conta <span class="req">●</span></label><input class="input" value="56789"></div>
+        <div class="field"><label>Dígito</label><input class="input" value="0" maxlength="2"></div>
+        <div class="field"><label>Tipo de conta <span class="req">●</span></label><select class="input"><option>Conta corrente</option><option>Conta poupança</option></select></div>
+        <div class="field"><label>Nome do titular <span class="req">●</span></label><input class="input" value="Marina Torres Albuquerque"></div>
+        <div class="field"><label>CPF/CNPJ <span class="req">●</span></label><input class="input" value="529.982.247-25"></div>
+        <div class="field"><label>Tipo da chave Pix</label><select class="input"><option>Sem Pix</option><option>CPF</option><option>CNPJ</option><option>E-mail</option><option>Telefone</option><option>Chave aleatória</option></select></div>
+        <div class="field"><label>Chave Pix</label><input class="input" placeholder="—"><span class="field-hint">Só o formato é validado — o sistema não consulta o DICT</span></div>
+        <div class="field span-2" style="flex-direction:row;align-items:center;gap:8px;">
+          <input type="checkbox" checked style="width:16px;height:16px;"><label style="margin:0;">Definir como conta principal (destino padrão)</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();pushToast('success','Conta salva.')">Salvar conta</button>
+    </div>
+  </div>`;
+}
+
+function modalRejeitar(id){
+  const r = REEMBOLSOS.find(x=>x.id===id) || REEMBOLSOS[0];
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div><h3>Rejeitar reembolso</h3><p>${r.id} · ${r.colaborador}</p></div>
+      <button class="close-x" onclick="closeModal()">${icon('x',18)}</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Motivo da rejeição <span class="req">●</span></label>
+        <textarea class="input" rows="4" placeholder="Explique o motivo — vai para o histórico e é visível ao solicitante"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--danger);" onclick="closeModal();pushToast('success','Reembolso rejeitado.')">Rejeitar solicitação</button>
+    </div>
+  </div>`;
+}
+
+function modalCategoria(){
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><div><h3>Nova categoria</h3><p>Categoria de pagamento</p></div><button class="close-x" onclick="closeModal()">${icon('x',18)}</button></div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;"><label>Nome <span class="req">●</span></label><input class="input" placeholder="Ex.: Manutenção predial"></div>
+      <div class="field" style="margin-bottom:14px;"><label>Tipo <span class="req">●</span></label><select class="input"><option>Fornecedor</option><option>Serviço</option><option>Salário</option><option>Férias</option><option>Décimo terceiro</option><option>Rescisão</option><option>Reembolso</option><option>Outro</option></select></div>
+      <div class="field" style="margin-bottom:14px;"><label>Descrição</label><textarea class="input" rows="2"></textarea></div>
+      <div class="field" style="flex-direction:row;align-items:center;gap:8px;"><input type="checkbox" checked style="width:16px;height:16px;"><label style="margin:0;">Ativa</label></div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="closeModal();pushToast('success','Categoria criada.')">Salvar categoria</button></div>
+  </div>`;
+}
+
+function modalExportar(){
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><div><h3>Exportar relatório</h3><p>Mantém os filtros aplicados na tela</p></div><button class="close-x" onclick="closeModal()">${icon('x',18)}</button></div>
+    <div class="modal-body">
+      <div class="transition-options">
+        <button class="transition-opt selected">${icon('file',17)}<span class="to-label">Planilha Excel (.xlsx)</span></button>
+        <button class="transition-opt">${icon('file',17)}<span class="to-label">Documento PDF</span></button>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="closeModal();pushToast('success','Exportação gerada.')">${icon('download',16)}Exportar</button></div>
+  </div>`;
+}
+
+const MODALS = {confirmar:modalConfirmar, status:modalStatus, desligar:modalDesligar, conta:modalConta, rejeitar:modalRejeitar, categoria:modalCategoria, exportar:modalExportar};
+
+
+/* ============================================================
+   SCREEN: Reembolsos
+   ============================================================ */
+function screenReembolsosLista(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-search">${icon('search',15)}<input placeholder="Buscar…"></div>
+      <div class="field-control field-select"><select><option>Status — todos</option>${Object.values(STATUS_REEMBOLSO).map(v=>`<option>${v.label}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Categoria — todas</option><option>Viagem</option><option>Alimentação</option><option>Material</option><option>Transporte</option><option>Outro</option></select></div>
+      <div class="field-control field-select"><select><option>Colaborador — todos</option>${COLABORADORES.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+      <button class="btn-clear-filters">${icon('x',13)}Limpar filtros</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Descrição</th><th>Colaborador</th><th>Categoria</th><th>Solicitação</th><th class="num">Valor</th><th>Status</th></tr></thead>
+        <tbody>
+          ${REEMBOLSOS.map(r=>`
+            <tr class="clickable" onclick="go('reembolso-detalhe','${r.id}')">
+              <td><div class="cell-primary link">${r.descricao}</div><div class="cell-sub mono">${r.id}</div></td>
+              <td>${r.colaborador}<div class="cell-sub">${r.departamento}</div></td>
+              <td style="text-transform:capitalize;">${r.categoria}</td>
+              <td class="mono">${dateBR(r.data_solicitacao)}</td>
+              <td class="num cell-money">${money(r.valor)}</td>
+              <td>${chip(STATUS_REEMBOLSO,r.status)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+      <div class="pagination"><div class="p-info">Mostrando 1–${REEMBOLSOS.length} de ${REEMBOLSOS.length}</div><div></div><div></div></div>
+    </div>
+  `;
+  return shell('Reembolsos','Solicitações de colaboradores, aprovação e registro de pagamento', `
+    <button class="btn btn-primary" onclick="go('reembolso-form')">${icon('plus',16)}<span class="lbl">Nova solicitação</span></button>`, body);
+}
+
+function screenReembolsoDetalhe(id){
+  const r = REEMBOLSOS.find(x=>x.id===id) || REEMBOLSOS[0];
+  const transicoes = TRANSICOES_REEMBOLSO[r.status] || [];
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('reembolsos-lista')">${icon('chevronLeft',15)}Voltar para reembolsos</button>
+    <div class="detail-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <div><h2 style="font-size:16px;">${r.descricao}</h2><span class="hint mono">${r.id}</span></div>
+            ${chip(STATUS_REEMBOLSO,r.status,14)}
+          </div>
+          <div class="card-pad">
+            <dl class="dl">
+              <div class="dl-item"><dt>Colaborador</dt><dd>${r.colaborador}</dd></div>
+              <div class="dl-item"><dt>Departamento</dt><dd>${r.departamento}</dd></div>
+              <div class="dl-item"><dt>Categoria</dt><dd style="text-transform:capitalize;">${r.categoria}</dd></div>
+              <div class="dl-item"><dt>Data da solicitação</dt><dd class="mono">${dateBR(r.data_solicitacao)}</dd></div>
+              <div class="dl-item"><dt>Valor</dt><dd class="mono" style="font-size:15.5px;">${money(r.valor)}</dd></div>
+              <div class="dl-item"><dt>Conta de destino</dt><dd>Itaú Unibanco, Ag. 1234, C/C 56789-0</dd></div>
+            </dl>
+          </div>
+          <div class="form-footer" style="justify-content:flex-start;flex-wrap:wrap;">
+            ${transicoes.includes('aprovado')?`<button class="btn btn-primary" onclick="pushToast('success','Reembolso aprovado.')">${icon('checkCircle',16)}Aprovar</button>`:''}
+            ${transicoes.includes('pago')?`<button class="btn btn-primary" onclick="pushToast('success','Reembolso registrado como pago.')">${icon('checkCircle',16)}Registrar como pago</button>`:''}
+            ${transicoes.includes('rejeitado')?`<button class="btn btn-secondary" onclick="openModal('rejeitar','${r.id}')">${icon('x',16)}Rejeitar</button>`:''}
+            ${transicoes.includes('pendente')?`<button class="btn btn-ghost" onclick="pushToast('success','Reembolso voltou para Pendente.')">${icon('refresh',16)}Reabrir</button>`:''}
+          </div>
+        </div>
+        <div class="card card-pad">
+          <h2 class="section-title" style="margin-bottom:14px;">Comprovante</h2>
+          <div class="account-item" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;gap:10px;align-items:center;">${icon('paperclip',18)}<div><div style="font-weight:600;font-size:13px;">comprovante-${r.id.toLowerCase()}.pdf</div><div class="cell-sub">Enviado por ${r.colaborador}</div></div></div>
+            <button class="btn btn-ghost btn-sm">${icon('download',15)}</button>
+          </div>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <h2 class="section-title">Linha do tempo</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-dot">${icon('clockOutline',11)}</div>
+            <div class="timeline-head">Pendente</div>
+            <div class="timeline-meta">${r.colaborador} · ${dateBR(r.data_solicitacao)} 09:14</div>
+          </div>
+          ${r.status!=='pendente'?`<div class="timeline-item">
+            <div class="timeline-dot" style="color:var(--${STATUS_REEMBOLSO[r.status].sev})">${icon(STATUS_REEMBOLSO[r.status].ic,11)}</div>
+            <div class="timeline-head">${STATUS_REEMBOLSO[r.status].label}</div>
+            <div class="timeline-meta">Rebeca Nunes Serra · ${dateBR(r.data_solicitacao)} 16:40</div>
+            ${r.status==='rejeitado'?`<div class="timeline-note">Fora da política de viagens vigente — reenviar com justificativa do gestor.</div>`:''}
+          </div>`:''}
+        </div>
+      </div>
+    </div>
+  `;
+  return shell('Reembolso', r.id, '', body);
+}
+
+function screenReembolsoForm(){
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('reembolsos-lista')">${icon('chevronLeft',15)}Voltar para reembolsos</button>
+    <div class="card form-card">
+      <h3>Solicitação de reembolso</h3>
+      <div class="form-grid">
+        <div class="field"><label>Colaborador <span class="req">●</span></label><select class="input">${COLABORADORES.filter(c=>c.status==='ativo').map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+        <div class="field"><label>Conta de destino</label><select class="input"><option>Itaú Unibanco · Ag. 1234 · C/C 56789-0</option></select></div>
+        <div class="field span-2"><label>Descrição <span class="req">●</span></label><input class="input" maxlength="255" placeholder="Ex.: Passagem aérea — visita técnica"></div>
+        <div class="field"><label>Categoria da despesa <span class="req">●</span></label><select class="input"><option>Viagem</option><option>Alimentação</option><option>Material</option><option>Transporte</option><option>Outro</option></select></div>
+        <div class="field"><label>Valor <span class="req">●</span></label><input class="input input-money" placeholder="R$ 0,00"></div>
+        <div class="field"><label>Data da solicitação <span class="req">●</span></label><div class="field-control">${icon('calendar',15)}<input value="19/08/2026"></div><span class="field-hint">Não pode ser futura</span></div>
+        <div class="field">
+          <label>Comprovante</label>
+          <div class="field-control" style="justify-content:center;border-style:dashed;">${icon('upload',15)}<span>Arraste ou clique para anexar</span></div>
+          <span class="field-hint">pdf, jpg, jpeg, png ou xml · máx. 10 MB</span>
+        </div>
+        <div class="field span-2"><label>Observações</label><textarea class="input" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="card"><div class="form-footer"><button class="btn btn-secondary" onclick="go('reembolsos-lista')">Cancelar</button><button class="btn btn-primary" onclick="pushToast('success','Solicitação enviada para aprovação.')">Enviar solicitação</button></div></div>
+  `;
+  return shell('Nova solicitação de reembolso','', '', body, {narrow:true});
+}
+
+
+/* ============================================================
+   SCREEN: Colaboradores
+   ============================================================ */
+const TIPO_CONTRATO = {clt:'CLT',pj:'PJ',estagio:'Estágio',autonomo:'Autônomo'};
+
+function screenColaboradoresLista(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-search">${icon('search',15)}<input placeholder="Buscar por nome, CPF, cargo ou e-mail…"></div>
+      <div class="field-control field-select"><select><option>Status — todos</option>${Object.values(STATUS_COLAB).map(v=>`<option>${v.label}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Departamento — todos</option>${[...new Set(COLABORADORES.map(c=>c.departamento))].map(d=>`<option>${d}</option>`).join('')}</select></div>
+      <button class="btn-clear-filters">${icon('x',13)}Limpar filtros</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Nome</th><th>Cargo</th><th>Contrato</th><th>Admissão</th><th class="num">Salário base</th><th class="num">Contas</th><th>Status</th></tr></thead>
+        <tbody>
+          ${COLABORADORES.map(c=>`
+            <tr class="clickable" onclick="go('colaborador-detalhe',${c.id})">
+              <td><div class="cell-primary link">${c.nome}</div><div class="cell-sub mono">${cpfFmt(c.cpf)}</div></td>
+              <td>${c.cargo}<div class="cell-sub">${c.departamento}</div></td>
+              <td>${TIPO_CONTRATO[c.tipo_contrato]}</td>
+              <td class="mono">${dateBR(c.data_admissao)}</td>
+              <td class="num cell-money">${money(c.salario_base)}</td>
+              <td class="num"><span class="count-badge ${c.contas===0?'zero':''}">${c.contas}</span></td>
+              <td>${chip(STATUS_COLAB,c.status)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+      <div class="pagination"><div class="p-info">Mostrando 1–${COLABORADORES.length} de ${COLABORADORES.length}</div><div></div><div class="p-size">Por página <select><option>15</option><option>30</option><option>50</option></select></div></div>
+    </div>
+  `;
+  return shell('Colaboradores','Folha de pagamento — cadastro e contas de destino', `
+    <button class="btn btn-primary" onclick="go('colaborador-form')">${icon('plus',16)}<span class="lbl">Novo colaborador</span></button>`, body);
+}
+
+function contasPanel(tipo, id, nome){
+  const contas = CONTAS_BANCARIAS[`${tipo}-${id}`] || [];
+  if(!contas.length){
+    return `
+    <div class="card card-pad">
+      <div class="card-header" style="padding:0 0 14px;border:0;"><h2>Contas e chaves Pix</h2><button class="btn btn-ghost btn-sm" onclick="openModal('conta')">${icon('plus',15)}</button></div>
+      <div class="state-block" style="padding:26px 8px;">
+        <div class="state-icon">${icon('bank',22)}</div>
+        <div class="state-title" style="font-size:13px;">Nenhuma conta cadastrada</div>
+        <div class="state-desc" style="font-size:12px;">Sem conta principal, o lançamento fica sem destino padrão.</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('conta')">${icon('plus',14)}Cadastrar conta</button>
+      </div>
+    </div>`;
+  }
+  return `
+  <div class="card card-pad">
+    <div class="card-header" style="padding:0 0 14px;border:0;"><h2>Contas e chaves Pix</h2><button class="btn btn-ghost btn-sm" onclick="openModal('conta')">${icon('plus',15)}</button></div>
+    ${contas.map(a=>`
+      <div class="account-item">
+        <div class="account-top">
+          <div><div class="account-bank">${a.banco}</div><div class="account-nums">Ag. ${a.agencia} · ${a.tipo_conta==='corrente'?'C/C':'Poup.'} ${a.conta}</div></div>
+          ${a.status==='inativa'?`<span class="tag-inactive">Inativa</span>`:a.principal?`<span class="tag-primary">Principal</span>`:''}
+        </div>
+        <div class="account-holder">${a.titular} · ${a.doc.length>11?cnpjFmt(a.doc):cpfFmt(a.doc)}</div>
+        ${a.pix?`<div class="pix-tag" style="margin-top:6px;">${icon('zap',13)}${a.pix.valor}</div>`:''}
+        <div class="account-actions">
+          ${a.status==='ativa' && !a.principal?`<button onclick="pushToast('success','Conta definida como principal.')">Tornar principal</button>`:''}
+          ${a.status==='ativa'?`<button class="danger" onclick="pushToast('success','Conta inativada.')">Inativar</button>`:`<button onclick="pushToast('success','Conta reativada.')">Reativar</button>`}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function screenColaboradorDetalhe(id){
+  const c = COLABORADORES.find(x=>x.id===Number(id)) || COLABORADORES[0];
+  const pagamentos = PAGAMENTOS.filter(p=>p.beneficiario_tipo==='colaborador' && p.beneficiario_id===c.id);
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('colaboradores-lista')">${icon('chevronLeft',15)}Voltar para colaboradores</button>
+    ${c.data_desligamento?`<div class="banner">${icon('info',15)}<div>Desligado em ${dateBR(c.data_desligamento)}. O histórico foi preservado e novos lançamentos de folha estão bloqueados.</div></div>`:''}
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;align-items:start;" class="detail-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h2 style="font-size:16px;">${c.nome}</h2>${chip(STATUS_COLAB,c.status,14)}</div>
+          <div class="card-pad">
+            <p class="section-title">Dados cadastrais</p>
+            <dl class="dl">
+              <div class="dl-item"><dt>CPF</dt><dd class="mono">${cpfFmt(c.cpf)}</dd></div>
+              <div class="dl-item"><dt>Cargo</dt><dd>${c.cargo}</dd></div>
+              <div class="dl-item"><dt>Departamento</dt><dd>${c.departamento}</dd></div>
+              <div class="dl-item"><dt>Tipo de contrato</dt><dd>${TIPO_CONTRATO[c.tipo_contrato]}</dd></div>
+              <div class="dl-item"><dt>Admissão</dt><dd class="mono">${dateBR(c.data_admissao)}</dd></div>
+              <div class="dl-item"><dt>Salário base</dt><dd class="mono">${money(c.salario_base)}</dd></div>
+              <div class="dl-item"><dt>E-mail</dt><dd>${c.email}</dd></div>
+              <div class="dl-item"><dt>Telefone</dt><dd>${c.telefone}</dd></div>
+            </dl>
+          </div>
+          <div class="form-footer" style="justify-content:flex-start;">
+            <button class="btn btn-secondary" onclick="go('colaborador-form')">${icon('edit',16)}Editar cadastro</button>
+            ${c.status!=='desligado'?`<button class="btn btn-danger-text" onclick="openModal('desligar',${c.id})">${icon('slashCircle',16)}Desligar</button>`:''}
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Últimos pagamentos</h2></div>
+          <div class="table-wrap"><table class="grid">
+            <thead><tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th></tr></thead>
+            <tbody>${pagamentos.map(p=>`<tr class="clickable" onclick="go('pagamento-detalhe','${p.id}')"><td><div class="cell-primary link">${p.descricao}</div></td><td>${p.categoria}</td><td class="mono">${dateBR(p.data_vencimento)}</td><td class="num cell-money">${money(p.valor)}</td><td>${chip(STATUS_PAGAMENTO,p.status)}</td></tr>`).join('')||`<tr><td colspan="5" style="text-align:center;color:var(--ink-55);padding:24px;">Nenhum pagamento lançado para este colaborador.</td></tr>`}</tbody>
+          </table></div>
+        </div>
+      </div>
+      ${contasPanel('colaborador', c.id, c.nome)}
+    </div>
+  `;
+  return shell('Colaborador', c.nome, '', body);
+}
+
+function screenColaboradorForm(){
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('colaboradores-lista')">${icon('chevronLeft',15)}Voltar para colaboradores</button>
+    <div class="card form-card">
+      <h3>Dados pessoais</h3>
+      <div class="form-grid">
+        <div class="field span-2"><label>Nome completo <span class="req">●</span></label><input class="input" value="Marina Torres Albuquerque" maxlength="255"></div>
+        <div class="field"><label>CPF <span class="req">●</span></label><input class="input mono" value="529.982.247-25"></div>
+        <div class="field"><label>E-mail</label><input class="input" value="marina.torres@corebanx.com"></div>
+        <div class="field"><label>Telefone</label><input class="input" value="(98) 99123-4455" maxlength="20"></div>
+      </div>
+    </div>
+    <div class="card form-card">
+      <h3>Vínculo</h3>
+      <div class="form-grid">
+        <div class="field"><label>Cargo <span class="req">●</span></label><input class="input" value="Analista Financeiro Sênior"></div>
+        <div class="field"><label>Departamento <span class="req">●</span></label><input class="input" value="Financeiro"></div>
+        <div class="field"><label>Tipo de contrato <span class="req">●</span></label><select class="input"><option>CLT</option><option>PJ</option><option>Estágio</option><option>Autônomo</option></select></div>
+        <div class="field"><label>Status <span class="req">●</span></label><select class="input"><option>Ativo</option><option>Afastado</option><option>Desligado</option></select></div>
+        <div class="field"><label>Data de admissão <span class="req">●</span></label><div class="field-control">${icon('calendar',15)}<input value="08/03/2021"></div></div>
+        <div class="field"><label>Salário base <span class="req">●</span></label><input class="input input-money" value="R$ 7.200,00"></div>
+        <div class="field span-2"><label>Observações</label><textarea class="input" rows="3" maxlength="5000"></textarea></div>
+      </div>
+    </div>
+    <div class="card"><div class="form-footer"><button class="btn btn-secondary" onclick="go('colaboradores-lista')">Cancelar</button><button class="btn btn-primary" onclick="pushToast('success','Cadastro salvo.')">Salvar alterações</button></div></div>
+  `;
+  return shell('Editar colaborador','', '', body, {narrow:true});
+}
+
+
+/* ============================================================
+   SCREEN: Fornecedores
+   ============================================================ */
+const TIPO_FORN = {produto:'Fornecedor de produto',servico:'Prestador de serviço',ambos:'Ambos'};
+
+function screenFornecedoresLista(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-search">${icon('search',15)}<input placeholder="Buscar por razão social, nome fantasia ou documento…"></div>
+      <div class="field-control field-select"><select><option>Status — todos</option>${Object.values(STATUS_FORN).map(v=>`<option>${v.label}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Tipo — todos</option><option>Fornecedor de produto</option><option>Prestador de serviço</option><option>Ambos</option></select></div>
+      <button class="btn-clear-filters">${icon('x',13)}Limpar filtros</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Razão social</th><th>Tipo</th><th class="num">Contratos</th><th class="num">Contas</th><th>Status</th></tr></thead>
+        <tbody>
+          ${FORNECEDORES.map(f=>`
+            <tr class="clickable" onclick="go('fornecedor-detalhe',${f.id})">
+              <td><div class="cell-primary link">${f.razao_social}</div><div class="cell-sub mono">${f.tipo_pessoa==='pj'?cnpjFmt(f.documento):cpfFmt(f.documento)}${f.nome_fantasia?` · ${f.nome_fantasia}`:''}</div></td>
+              <td>${TIPO_FORN[f.tipo_fornecedor]}</td>
+              <td class="num"><span class="count-badge">${f.contratos}</span></td>
+              <td class="num"><span class="count-badge ${f.contas===0?'zero':''}">${f.contas}</span></td>
+              <td>${chip(STATUS_FORN,f.status)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>
+      <div class="pagination"><div class="p-info">Mostrando 1–${FORNECEDORES.length} de ${FORNECEDORES.length}</div><div></div><div></div></div>
+    </div>
+  `;
+  return shell('Fornecedores','Prestadores de serviço e fornecedores de produto', `
+    <button class="btn btn-primary" onclick="go('fornecedor-form')">${icon('plus',16)}<span class="lbl">Novo fornecedor</span></button>`, body);
+}
+
+function screenFornecedorDetalhe(id){
+  const f = FORNECEDORES.find(x=>x.id===Number(id)) || FORNECEDORES[0];
+  const contratos = CONTRATOS.filter(c=>c.fornecedor===f.razao_social);
+  const pagamentos = PAGAMENTOS.filter(p=>p.beneficiario_tipo==='fornecedor' && p.beneficiario_id===f.id);
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('fornecedores-lista')">${icon('chevronLeft',15)}Voltar para fornecedores</button>
+    <div class="detail-grid">
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h2 style="font-size:16px;">${f.razao_social}</h2>${chip(STATUS_FORN,f.status,14)}</div>
+          <div class="card-pad">
+            <dl class="dl">
+              <div class="dl-item"><dt>Nome fantasia</dt><dd>${f.nome_fantasia||'—'}</dd></div>
+              <div class="dl-item"><dt>Documento</dt><dd class="mono">${f.tipo_pessoa==='pj'?cnpjFmt(f.documento):cpfFmt(f.documento)}</dd></div>
+              <div class="dl-item"><dt>Tipo de pessoa</dt><dd>${f.tipo_pessoa==='pj'?'Pessoa Jurídica':'Pessoa Física'}</dd></div>
+              <div class="dl-item"><dt>Tipo de fornecedor</dt><dd>${TIPO_FORN[f.tipo_fornecedor]}</dd></div>
+            </dl>
+          </div>
+          <div class="form-footer" style="justify-content:flex-start;">
+            <button class="btn btn-secondary" onclick="go('fornecedor-form')">${icon('edit',16)}Editar cadastro</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><h2>Contratos</h2></div>
+          <div class="table-wrap"><table class="grid"><thead><tr><th>Descrição</th><th>Tipo</th><th class="num">Valor</th><th>Status</th></tr></thead>
+          <tbody>${contratos.map(c=>`<tr class="clickable" onclick="go('contrato-detalhe',${c.id})"><td class="cell-primary link">${c.descricao}</td><td>${c.tipo==='recorrente'?'Recorrente':'Pontual'}</td><td class="num cell-money">${money(c.valor)}</td><td>${chip(STATUS_CONTRATO,c.status)}</td></tr>`).join('')||`<tr><td colspan="4" style="text-align:center;color:var(--ink-55);padding:20px;">Nenhum contrato.</td></tr>`}</tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2>Últimos pagamentos</h2></div>
+          <div class="table-wrap"><table class="grid"><thead><tr><th>Descrição</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th></tr></thead>
+          <tbody>${pagamentos.map(p=>`<tr class="clickable" onclick="go('pagamento-detalhe','${p.id}')"><td class="cell-primary link">${p.descricao}</td><td class="mono">${dateBR(p.data_vencimento)}</td><td class="num cell-money">${money(p.valor)}</td><td>${chip(STATUS_PAGAMENTO,p.status)}</td></tr>`).join('')||`<tr><td colspan="4" style="text-align:center;color:var(--ink-55);padding:20px;">Nenhum pagamento.</td></tr>`}</tbody></table></div>
+        </div>
+      </div>
+      ${contasPanel('fornecedor', f.id, f.razao_social)}
+    </div>
+  `;
+  return shell('Fornecedor', f.razao_social, '', body);
+}
+
+function screenFornecedorForm(){
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('fornecedores-lista')">${icon('chevronLeft',15)}Voltar para fornecedores</button>
+    <div class="card form-card">
+      <h3>Dados do fornecedor</h3>
+      <p class="form-card-hint">O tipo de pessoa muda a máscara do documento abaixo.</p>
+      <div class="form-grid">
+        <div class="field span-2">
+          <label>Tipo de pessoa <span class="req">●</span></label>
+          <div class="toggle-group"><button>Pessoa Física</button><button class="active">Pessoa Jurídica</button></div>
+        </div>
+        <div class="field span-2"><label>Razão social / nome <span class="req">●</span></label><input class="input" value="Alpha Contabilidade e Assessoria Ltda"></div>
+        <div class="field"><label>Nome fantasia</label><input class="input" value="Alpha Contábil"></div>
+        <div class="field"><label>CPF/CNPJ <span class="req">●</span></label><input class="input mono" value="11.222.333/0001-81"><span class="field-hint linked">Máscara de CNPJ — tipo de pessoa é Jurídica</span></div>
+        <div class="field"><label>Tipo de fornecedor <span class="req">●</span></label><select class="input"><option>Prestador de serviço</option><option>Fornecedor de produto</option><option>Ambos</option></select></div>
+        <div class="field"><label>Status <span class="req">●</span></label><select class="input"><option>Ativo</option><option>Inativo</option></select></div>
+        <div class="field"><label>E-mail</label><input class="input" value="contato@alphacontabil.com.br"></div>
+        <div class="field"><label>Telefone</label><input class="input" value="(98) 3232-1010"></div>
+        <div class="field span-2"><label>Endereço</label><input class="input" maxlength="255"></div>
+        <div class="field span-2"><label>Observações</label><textarea class="input" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="card"><div class="form-footer"><button class="btn btn-secondary" onclick="go('fornecedores-lista')">Cancelar</button><button class="btn btn-primary" onclick="pushToast('success','Fornecedor salvo.')">Salvar alterações</button></div></div>
+  `;
+  return shell('Editar fornecedor','', '', body, {narrow:true});
+}
+
+/* ============================================================
+   SCREEN: Contratos
+   ============================================================ */
+function screenContratosLista(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-select"><select><option>Status — todos</option>${Object.values(STATUS_CONTRATO).map(v=>`<option>${v.label}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Tipo — todos</option><option>Pontual</option><option>Recorrente</option></select></div>
+      <div class="field-control field-select"><select><option>Fornecedor — todos</option>${FORNECEDORES.map(f=>`<option>${f.razao_social}</option>`).join('')}</select></div>
+      <button class="btn-clear-filters">${icon('x',13)}Limpar filtros</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Descrição</th><th>Fornecedor</th><th>Tipo</th><th class="num">Valor</th><th>Próximo vencimento</th><th>Status</th></tr></thead>
+        <tbody>${CONTRATOS.map(c=>`
+          <tr class="clickable" onclick="go('contrato-detalhe',${c.id})">
+            <td><div class="cell-primary link">${c.descricao}</div><div class="cell-sub">${c.categoria}</div></td>
+            <td>${c.fornecedor}</td>
+            <td>${c.tipo==='recorrente'?`Recorrente <span class="cell-sub" style="display:block;">${c.periodicidade}, dia ${c.dia_vencimento}</span>`:'Pontual'}</td>
+            <td class="num cell-money">${money(c.valor)}</td>
+            <td class="mono">${c.proximo?dateBR(c.proximo):'—'}</td>
+            <td>${chip(STATUS_CONTRATO,c.status)}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="pagination"><div class="p-info">Mostrando 1–${CONTRATOS.length} de ${CONTRATOS.length}</div><div></div><div></div></div>
+    </div>
+  `;
+  return shell('Contratos','Vínculos com fornecedores — pontuais e recorrentes', `
+    <button class="btn btn-primary" onclick="go('contrato-form')">${icon('plus',16)}<span class="lbl">Novo contrato</span></button>`, body);
+}
+
+function screenContratoDetalhe(id){
+  const c = CONTRATOS.find(x=>x.id===Number(id)) || CONTRATOS[0];
+  const pagamentos = PAGAMENTOS.filter(p=>p.categoria===c.categoria).slice(0,5);
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('contratos-lista')">${icon('chevronLeft',15)}Voltar para contratos</button>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header"><h2 style="font-size:16px;">${c.descricao}</h2>${chip(STATUS_CONTRATO,c.status,14)}</div>
+      <div class="card-pad">
+        <dl class="dl">
+          <div class="dl-item"><dt>Fornecedor</dt><dd>${c.fornecedor}</dd></div>
+          <div class="dl-item"><dt>Categoria</dt><dd>${c.categoria}</dd></div>
+          <div class="dl-item"><dt>Tipo</dt><dd>${c.tipo==='recorrente'?'Recorrente':'Pontual'}</dd></div>
+          <div class="dl-item"><dt>Valor</dt><dd class="mono">${money(c.valor)}</dd></div>
+          ${c.tipo==='recorrente'?`<div class="dl-item"><dt>Periodicidade</dt><dd style="text-transform:capitalize;">${c.periodicidade}</dd></div><div class="dl-item"><dt>Dia de vencimento</dt><dd class="mono">${c.dia_vencimento}</dd></div>`:''}
+          <div class="dl-item"><dt>Próximo vencimento</dt><dd class="mono">${c.proximo?dateBR(c.proximo):'—'}</dd></div>
+        </dl>
+      </div>
+      <div class="form-footer" style="justify-content:flex-start;"><button class="btn btn-secondary" onclick="go('contrato-form')">${icon('edit',16)}Editar contrato</button></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h2>Pagamentos gerados por este contrato</h2></div>
+      <div class="table-wrap"><table class="grid"><thead><tr><th>Descrição</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th></tr></thead>
+      <tbody>${pagamentos.map(p=>`<tr class="clickable" onclick="go('pagamento-detalhe','${p.id}')"><td class="cell-primary link">${p.descricao}</td><td class="mono">${dateBR(p.data_vencimento)}</td><td class="num cell-money">${money(p.valor)}</td><td>${chip(STATUS_PAGAMENTO,p.status)}</td></tr>`).join('')}</tbody></table></div>
+    </div>
+  `;
+  return shell('Contrato', c.descricao, '', body);
+}
+
+function screenContratoForm(){
+  const body = `
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:12px;" onclick="go('contratos-lista')">${icon('chevronLeft',15)}Voltar para contratos</button>
+    <div class="card form-card">
+      <h3>Dados do contrato</h3>
+      <p class="form-card-hint">Escolher "Recorrente" revela periodicidade e dia de vencimento — são eles que alimentam a geração automática às 06:00.</p>
+      <div class="form-grid">
+        <div class="field span-2"><label>Fornecedor <span class="req">●</span></label><select class="input">${FORNECEDORES.filter(f=>f.status==='ativo').map(f=>`<option>${f.razao_social}</option>`).join('')}</select></div>
+        <div class="field"><label>Categoria</label><select class="input">${CATEGORIAS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+        <div class="field"><label>Conta de destino</label><select class="input"><option>Usar a principal do fornecedor</option></select></div>
+        <div class="field span-2"><label>Descrição <span class="req">●</span></label><input class="input" placeholder="Ex.: Contabilidade, Aluguel"></div>
+        <div class="field span-2">
+          <label>Tipo <span class="req">●</span></label>
+          <div class="toggle-group"><button>Pontual</button><button class="active">Recorrente</button></div>
+        </div>
+        <div class="field"><label>Valor <span class="req">●</span></label><input class="input input-money" placeholder="R$ 0,00"></div>
+        <div class="field"><label>Data de início <span class="req">●</span></label><div class="field-control">${icon('calendar',15)}<input placeholder="dd/mm/aaaa"></div></div>
+        <div class="field"><label>Periodicidade <span style="color:var(--danger);font-weight:700;">●</span></label><select class="input"><option>Mensal</option><option>Quinzenal</option><option>Anual</option></select><span class="field-hint linked">Obrigatório — contrato recorrente</span></div>
+        <div class="field"><label>Dia de vencimento <span style="color:var(--danger);font-weight:700;">●</span></label><input class="input" placeholder="1–31"><span class="field-hint linked">Obrigatório — contrato recorrente</span></div>
+        <div class="field"><label>Data de término</label><div class="field-control">${icon('calendar',15)}<input placeholder="Opcional"></div></div>
+        <div class="field"><label>Status <span class="req">●</span></label><select class="input"><option>Ativo</option><option>Suspenso</option><option>Encerrado</option></select></div>
+        <div class="field span-2"><label>Observações</label><textarea class="input" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="card"><div class="form-footer"><button class="btn btn-secondary" onclick="go('contratos-lista')">Cancelar</button><button class="btn btn-primary" onclick="pushToast('success','Contrato salvo.')">Salvar contrato</button></div></div>
+  `;
+  return shell('Novo contrato','', '', body, {narrow:true});
+}
+
+
+/* ============================================================
+   SCREEN: Categorias
+   ============================================================ */
+function screenCategoriasLista(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-select"><select><option>Tipo — todos</option></select></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Nome</th><th>Tipo</th><th class="num">Pagamentos</th><th>Status</th><th></th></tr></thead>
+        <tbody>${CATEGORIAS.map(c=>`
+          <tr>
+            <td class="cell-primary">${c.nome}</td>
+            <td style="text-transform:capitalize;">${c.tipo.replace('_',' ')}</td>
+            <td class="num"><span class="count-badge">${c.pagamentos}</span></td>
+            <td>${c.ativo?chip(STATUS_FORN,'ativo'):chip(STATUS_FORN,'inativo')}</td>
+            <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openModal('categoria')">${icon('edit',14)}</button></td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+    <p class="field-hint" style="margin-top:10px;">Tabela curta — sem paginação no servidor.</p>
+  `;
+  return shell('Categorias','Classificação usada em pagamentos e relatórios', `
+    <button class="btn btn-primary" onclick="openModal('categoria')">${icon('plus',16)}<span class="lbl">Nova categoria</span></button>`, body);
+}
+
+/* ============================================================
+   SCREEN: Relatórios
+   ============================================================ */
+function screenRelatorios(){
+  const total = PAGAMENTOS.reduce((s,p)=>s+p.valor,0);
+  const qtd = PAGAMENTOS.length;
+  const porStatus = {};
+  PAGAMENTOS.forEach(p=>{ porStatus[p.status]=(porStatus[p.status]||{total:0,qtd:0}); porStatus[p.status].total+=p.valor; porStatus[p.status].qtd++; });
+  const porCategoria = {};
+  PAGAMENTOS.forEach(p=>{ porCategoria[p.categoria]=(porCategoria[p.categoria]||0)+p.valor; });
+  const catMax = Math.max(...Object.values(porCategoria));
+
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-date">${icon('calendar',14)}<input placeholder="Período — de"></div>
+      <div class="field-control field-date">${icon('calendar',14)}<input placeholder="Período — até"></div>
+      <div class="field-control field-select"><select><option>Categoria — todas</option>${CATEGORIAS.map(c=>`<option>${c.nome}</option>`).join('')}</select></div>
+      <div class="field-control field-select"><select><option>Status — todos</option>${Object.values(STATUS_PAGAMENTO).map(v=>`<option>${v.label}</option>`).join('')}</select></div>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('exportar')">${icon('download',15)}Exportar</button>
+    </div>
+
+    <div class="indicators" style="grid-template-columns:repeat(2,1fr);margin-bottom:20px;">
+      <div class="indicator-card"><div class="indicator-label">Total no período</div><div class="indicator-value">${money(total)}</div><div class="indicator-detail">${qtd} lançamentos</div></div>
+      <div class="indicator-card"><div class="indicator-label">Ticket médio</div><div class="indicator-value">${money(total/qtd)}</div><div class="indicator-detail">por lançamento</div></div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="card">
+        <div class="card-header"><h2>Por status</h2></div>
+        <div class="table-wrap"><table class="grid"><thead><tr><th>Status</th><th class="num">Quantidade</th><th class="num">Total</th></tr></thead>
+        <tbody>${Object.entries(porStatus).map(([k,v])=>`<tr><td>${chip(STATUS_PAGAMENTO,k)}</td><td class="num mono">${v.qtd}</td><td class="num cell-money">${money(v.total)}</td></tr>`).join('')}</tbody></table></div>
+      </div>
+      <div class="card card-pad">
+        <h2 style="font-size:14.5px;margin:0 0 14px;font-weight:600;">Por categoria</h2>
+        ${Object.entries(porCategoria).sort((a,b)=>b[1]-a[1]).map(([nome,total])=>`
+          <div class="prop-row"><div class="prop-top"><span class="pname">${nome}</span><span class="pval">${money(total)}</span></div>
+          <div class="prop-track"><div class="prop-fill" style="width:${Math.round(total/catMax*100)}%"></div></div></div>`).join('')}
+      </div>
+    </div>
+  `;
+  return shell('Relatórios','Resumo consolidado de pagamentos por status e categoria', '', body);
+}
+
+/* ============================================================
+   SCREEN: Auditoria
+   ============================================================ */
+function screenAuditoria(){
+  const body = `
+    <div class="filter-bar">
+      <div class="field-control field-select"><select><option>Módulo — todos</option><option>Pagamentos</option><option>Reembolsos</option><option>Colaboradores</option><option>Fornecedores</option><option>Contratos</option></select></div>
+      <div class="field-control field-select"><select><option>Usuário — todos</option>${[...new Set(AUDITORIA.map(a=>a.usuario))].map(u=>`<option>${u}</option>`).join('')}</select></div>
+      <div class="field-control field-date">${icon('calendar',14)}<input placeholder="Período"></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Quando</th><th>Usuário</th><th>Módulo</th><th>Evento</th><th>Alteração</th></tr></thead>
+        <tbody>${AUDITORIA.map(a=>`
+          <tr>
+            <td class="mono">${dateTimeBR(a.quando)}</td>
+            <td>${a.usuario==='Sistema'?`<span class="auto-tag">Sistema</span>`:a.usuario}</td>
+            <td>${a.modulo}</td>
+            <td>${a.descricao}</td>
+            <td>${(a.campos||[]).map(c=>`<div class="cell-sub mono">${c.c}: ${c.de} → ${c.para}</div>`).join('')||'—'}</td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="pagination"><div class="p-info">Mostrando 1–${AUDITORIA.length} de ${AUDITORIA.length}</div><div></div><div></div></div>
+    </div>
+  `;
+  return shell('Auditoria','Toda mudança de status e cadastro, com quem, quando e o quê', '', body);
+}
+
+
+/* ============================================================
+   SCREEN: Autenticação (padrão Breeze, com a marca Corebanx)
+   ============================================================ */
+function authLogo(){
+  return `<svg width="34" height="34" viewBox="0 0 30 30" fill="none"><rect width="30" height="30" rx="8" fill="#F37B46"/><path d="M8 21V9h6.2c3 0 4.8 1.7 4.8 4.4 0 2.7-1.9 4.4-4.9 4.4H11v3.2H8Zm3-5.7h2.9c1.3 0 2.1-.7 2.1-1.9 0-1.2-.8-1.9-2.1-1.9H11v3.8Z" fill="#fff"/></svg>`;
+}
+function screenLogin(){
+  return `
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">${authLogo()}<div><div style="font-weight:700;font-size:15px;">PayrollOS</div><div style="font-size:11px;color:var(--ink-55);">Corebanx</div></div></div>
+      <h1 class="login-title">Entrar</h1>
+      <p class="login-sub">Acesso restrito. Contas são criadas pelo administrador — não há cadastro público.</p>
+      <div class="field" style="margin-bottom:14px;"><label>E-mail</label><div class="field-control">${icon('mail',15)}<input value="abisai.santos@corebanx.com"></div></div>
+      <div class="field" style="margin-bottom:10px;"><label>Senha</label><div class="field-control">${icon('lock',15)}<input type="password" value="••••••••"></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <label style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-70);"><input type="checkbox" checked style="width:14px;height:14px;">Lembrar-me</label>
+        <button style="background:none;border:0;font-size:12.5px;color:var(--blue-600);font-weight:600;" onclick="go('esqueci-senha')">Esqueceu a senha?</button>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="go('dashboard')">Entrar</button>
+      <div class="login-foot">Sistema de controle interno. Não executa pagamentos.</div>
+    </div>
+  </div>`;
+}
+function authShell(title, sub, bodyHtml, footHtml){
+  return `
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">${authLogo()}<div><div style="font-weight:700;font-size:15px;">PayrollOS</div><div style="font-size:11px;color:var(--ink-55);">Corebanx</div></div></div>
+      <h1 class="login-title">${title}</h1>
+      <p class="login-sub">${sub}</p>
+      ${bodyHtml}
+      ${footHtml||''}
+    </div>
+  </div>`;
+}
+function screenEsqueciSenha(){
+  return authShell('Esqueci a senha','Informe seu e-mail cadastrado e enviaremos um link para redefinir a senha.', `
+    <div class="field" style="margin-bottom:18px;"><label>E-mail</label><div class="field-control">${icon('mail',15)}<input placeholder="voce@corebanx.com"></div></div>
+    <button class="btn btn-primary btn-block" onclick="pushToast('success','Link de redefinição enviado.')">Enviar link de redefinição</button>
+  `, `<div class="login-foot"><button style="background:none;border:0;color:var(--blue-600);font-weight:600;font-size:12px;" onclick="go('login')">Voltar para o login</button></div>`);
+}
+function screenRedefinirSenha(){
+  return authShell('Redefinir senha','Escolha uma nova senha para sua conta.', `
+    <div class="field" style="margin-bottom:14px;"><label>Nova senha</label><div class="field-control">${icon('lock',15)}<input type="password"></div></div>
+    <div class="field" style="margin-bottom:18px;"><label>Confirmar nova senha</label><div class="field-control">${icon('lock',15)}<input type="password"></div></div>
+    <button class="btn btn-primary btn-block" onclick="go('login')">Redefinir senha</button>
+  `);
+}
+function screenConfirmarSenha(){
+  return authShell('Confirmar senha','Esta é uma área protegida. Confirme sua senha antes de continuar.', `
+    <div class="field" style="margin-bottom:18px;"><label>Senha</label><div class="field-control">${icon('lock',15)}<input type="password"></div></div>
+    <button class="btn btn-primary btn-block" onclick="go('dashboard')">Confirmar</button>
+  `);
+}
+function screenVerificarEmail(){
+  return authShell('Verifique seu e-mail','Enviamos um link de verificação para o seu endereço de e-mail. Confira sua caixa de entrada.', `
+    <button class="btn btn-primary btn-block" onclick="pushToast('success','E-mail de verificação reenviado.')">Reenviar e-mail de verificação</button>
+  `, `<div class="login-foot"><button style="background:none;border:0;color:var(--blue-600);font-weight:600;font-size:12px;" onclick="go('login')">Sair</button></div>`);
+}
+
+/* ============================================================
+   SCREEN: Meu perfil
+   ============================================================ */
+function screenMeuPerfil(){
+  const body = `
+    <div class="card form-card">
+      <h3>Dados do perfil</h3>
+      <div class="form-grid">
+        <div class="field span-2"><label>Nome</label><input class="input" value="Abisai Santos"></div>
+        <div class="field span-2"><label>E-mail</label><input class="input" value="abisai.santos@corebanx.com"></div>
+      </div>
+      <div class="form-footer" style="padding:16px 0 0;border:0;"><button class="btn btn-primary" onclick="pushToast('success','Perfil atualizado.')">Salvar</button></div>
+    </div>
+    <div class="card form-card">
+      <h3>Alterar senha</h3>
+      <div class="form-grid">
+        <div class="field span-2"><label>Senha atual</label><input class="input" type="password"></div>
+        <div class="field"><label>Nova senha</label><input class="input" type="password"></div>
+        <div class="field"><label>Confirmar nova senha</label><input class="input" type="password"></div>
+      </div>
+      <div class="form-footer" style="padding:16px 0 0;border:0;"><button class="btn btn-primary" onclick="pushToast('success','Senha atualizada.')">Atualizar senha</button></div>
+    </div>
+    <div class="card form-card" style="border-color:var(--danger-line);">
+      <h3 style="color:var(--danger);">Excluir conta</h3>
+      <p class="form-card-hint">Esta ação é permanente. Todos os dados de acesso serão removidos.</p>
+      <button class="btn btn-danger-text" style="border:1px solid var(--danger-line);">Excluir minha conta</button>
+    </div>
+  `;
+  return shell('Meu perfil','Dados de acesso e conta', '', body, {narrow:true});
+}
+
+
+/* ============================================================
+   SCREEN: Usuários (nova — lacuna encontrada no produto)
+   ============================================================ */
+const PERFIL_LABEL = {administrador:'Administrador', financeiro:'Financeiro', gestor:'Gestor', leitura:'Leitura'};
+function screenUsuariosLista(){
+  const body = `
+    <div class="banner">${icon('info',15)}<div><b>Tela nova.</b> A permissão <span class="mono">usuarios.gerenciar</span> já existe no backend, mas não havia interface — hoje o único jeito de dar acesso é rodar o seeder. Esta tela preenche essa lacuna.</div></div>
+    <div class="filter-bar">
+      <div class="field-control field-search">${icon('search',15)}<input placeholder="Buscar por nome ou e-mail…"></div>
+      <div class="field-control field-select"><select><option>Perfil — todos</option><option>Administrador</option><option>Financeiro</option><option>Gestor</option><option>Leitura</option></select></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Colaborador vinculado</th><th>Status</th><th></th></tr></thead>
+        <tbody>${USUARIOS.map(u=>`
+          <tr>
+            <td class="cell-primary">${u.nome}</td>
+            <td>${u.email}</td>
+            <td><span class="chip chip-info">${icon('shield',13)}${PERFIL_LABEL[u.perfil]}</span></td>
+            <td>${u.colaborador||'—'}</td>
+            <td>${u.status==='ativo'?chip(STATUS_FORN,'ativo'):chip(STATUS_FORN,'inativo')}</td>
+            <td style="text-align:right;"><button class="btn btn-ghost btn-sm" onclick="openModal('usuario',${u.id})">${icon('edit',14)}</button></td>
+          </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+  `;
+  return shell('Usuários','Quem acessa o PayrollOS, com qual perfil', `
+    <button class="btn btn-primary" onclick="openModal('usuario')">${icon('plus',16)}<span class="lbl">Novo usuário</span></button>`, body);
+}
+function modalUsuario(id){
+  const u = id ? USUARIOS.find(x=>x.id===Number(id)) : null;
+  return `
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-head"><div><h3>${u?'Editar usuário':'Novo usuário'}</h3><p>Acesso ao PayrollOS</p></div><button class="close-x" onclick="closeModal()">${icon('x',18)}</button></div>
+    <div class="modal-body">
+      <div class="field" style="margin-bottom:14px;"><label>Nome <span class="req">●</span></label><input class="input" value="${u?u.nome:''}"></div>
+      <div class="field" style="margin-bottom:14px;"><label>E-mail <span class="req">●</span></label><input class="input" value="${u?u.email:''}"></div>
+      <div class="field" style="margin-bottom:14px;"><label>Perfil <span class="req">●</span></label><select class="input">
+        <option ${u&&u.perfil==='administrador'?'selected':''}>Administrador</option>
+        <option ${u&&u.perfil==='financeiro'?'selected':''}>Financeiro</option>
+        <option ${u&&u.perfil==='gestor'?'selected':''}>Gestor</option>
+        <option ${u&&u.perfil==='leitura'?'selected':''}>Leitura</option>
+      </select></div>
+      <div class="field"><label>Vincular a colaborador</label><select class="input"><option>Nenhum</option>${COLABORADORES.map(c=>`<option ${u&&u.colaborador===c.nome?'selected':''}>${c.nome}</option>`).join('')}</select><span class="field-hint">Opcional — associa o login a um cadastro de colaborador</span></div>
+    </div>
+    <div class="modal-foot">
+      ${u?`<button class="btn btn-danger-text" style="margin-right:auto;" onclick="closeModal();pushToast('success','Usuário desativado.')">${u.status==='ativo'?'Desativar':'Reativar'}</button>`:''}
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="closeModal();pushToast('success','Usuário salvo. Um convite foi enviado por e-mail.')">Salvar usuário</button>
+    </div>
+  </div>`;
+}
+MODALS.usuario = modalUsuario;
+
+/* ============================================================
+   SCREEN: Erros
+   ============================================================ */
+function screenErro403(){
+  const body = `
+    <div class="state-block" style="padding-top:80px;">
+      <div class="state-icon" style="background:var(--warn-bg);color:var(--warn);">${icon('lock',24)}</div>
+      <div class="state-title" style="font-size:17px;">Sem permissão para acessar esta tela</div>
+      <div class="state-desc">Seu perfil (<b>Leitura</b>) não inclui acesso a este módulo. Se você acredita que deveria ter acesso, fale com um administrador.</div>
+      <button class="btn btn-primary" onclick="go('dashboard')">Voltar ao Dashboard</button>
+    </div>`;
+  return shell('Acesso restrito','', '', body);
+}
+function screenErro404(){
+  const body = `
+    <div class="state-block" style="padding-top:80px;">
+      <div class="state-icon">${icon('search',24)}</div>
+      <div class="state-title" style="font-size:17px;">Página não encontrada</div>
+      <div class="state-desc">O endereço acessado não existe ou o registro foi removido.</div>
+      <button class="btn btn-primary" onclick="go('dashboard')">Voltar ao Dashboard</button>
+    </div>`;
+  return shell('Página não encontrada','', '', body);
+}
+
+/* ============================================================
+   SCREEN: Estados (carregando / vazio por filtro / vazio de verdade / erro)
+   ============================================================ */
+function screenEstados(){
+  const body = `
+    <p class="kicker">Vocabulário de estados</p>
+    <h2 class="pagetitle">Estados que toda listagem precisa</h2>
+    <p class="pagedesc">Definidos uma vez e reaplicados em Pagamentos, Reembolsos, Colaboradores, Fornecedores e Contratos.</p>
+
+    <div class="section-title" style="margin-top:8px;">Carregando</div>
+    <div class="card" style="margin-bottom:22px;">
+      <div class="table-wrap"><table class="grid">
+        <thead><tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th class="num">Valor</th><th>Status</th></tr></thead>
+        <tbody>${[1,2,3,4,5].map(()=>`<tr>
+          <td><div class="skeleton" style="height:13px;width:70%;margin-bottom:6px;"></div><div class="skeleton" style="height:10px;width:45%;"></div></td>
+          <td><div class="skeleton" style="height:13px;width:60%;"></div></td>
+          <td><div class="skeleton" style="height:13px;width:50%;"></div></td>
+          <td><div class="skeleton" style="height:13px;width:55%;margin-left:auto;"></div></td>
+          <td><div class="skeleton" style="height:20px;width:70px;border-radius:100px;"></div></td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+
+    <div class="section-title">Vazio por filtro</div>
+    <div class="card" style="margin-bottom:22px;">
+      <div class="state-block">
+        <div class="state-icon">${icon('filter',22)}</div>
+        <div class="state-title">Nenhum resultado para estes filtros</div>
+        <div class="state-desc">Ajuste os filtros aplicados ou limpe-os para ver todos os lançamentos.</div>
+        <button class="btn btn-secondary btn-sm">${icon('x',14)}Limpar filtros</button>
+      </div>
+    </div>
+
+    <div class="section-title">Vazio de verdade — primeiro uso</div>
+    <div class="card" style="margin-bottom:22px;">
+      <div class="state-block">
+        <div class="state-icon">${icon('wallet',22)}</div>
+        <div class="state-title">Nenhum pagamento cadastrado ainda</div>
+        <div class="state-desc">Comece cadastrando seus colaboradores e fornecedores, depois lance o primeiro pagamento.</div>
+        <button class="btn btn-primary btn-sm" onclick="go('pagamento-form')">${icon('plus',14)}Lançar o primeiro pagamento</button>
+      </div>
+    </div>
+
+    <div class="section-title">Erro de carregamento</div>
+    <div class="card">
+      <div class="state-block">
+        <div class="state-icon" style="background:var(--danger-bg);color:var(--danger);">${icon('alertOctagon',22)}</div>
+        <div class="state-title">Não foi possível carregar os dados</div>
+        <div class="state-desc">Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte.</div>
+        <button class="btn btn-secondary btn-sm">${icon('refresh',14)}Tentar novamente</button>
+      </div>
+    </div>
+  `;
+  return shell('Estados da interface','Carregando, vazio e erro — para toda listagem do sistema', '', body);
+}
+
+
+/* ============================================================
+   Fallback: EmConstrucao — marker for a screen not yet designed
+   ============================================================ */
+function screenEmConstrucao(title){
+  const body = `
+    <div class="state-block" style="padding-top:70px;">
+      <div class="state-icon">${icon('file',22)}</div>
+      <div class="state-title">Em construção</div>
+      <div class="state-desc">Esta tela segue a mesma gramática de tabela, formulário e vocabulário de status já estabelecida — ainda não foi desenhada em detalhe neste protótipo.</div>
+      <button class="btn btn-secondary btn-sm" onclick="go('prototype-index')">${icon('menu',14)}Ver índice de telas</button>
+    </div>`;
+  return shell(title||'Em construção','', '', body);
+}
+
+/* ============================================================
+   SCREEN: Índice do protótipo
+   ============================================================ */
+function screenPrototypeIndex(){
+  const groups = {};
+  SCREEN_INDEX.forEach(e=>{ (groups[e.g]=groups[e.g]||[]).push(e); });
+  const readyCount = SCREEN_INDEX.filter(e=>BUILT_KEYS.has(e.key)).length;
+  const body = `
+    <p class="kicker">Protótipo de design · PayrollOS</p>
+    <h2 class="pagetitle">Índice das 40 telas do briefing</h2>
+    <p class="pagedesc">Ordenadas por prioridade, como no documento original. ${readyCount} de ${SCREEN_INDEX.length} desenhadas nesta rodada — as demais usam o marcador "Em construção" com a mesma casca e gramática visual.</p>
+    <div class="idx-groups">
+      ${Object.entries(groups).map(([g,items])=>`
+        <div class="idx-group">
+          <h4>${g}</h4>
+          <div class="idx-grid">
+            ${items.map(e=>`
+              <button class="idx-card" onclick="selectFromIndex(${e.n})">
+                <span class="idx-num">${String(e.n).padStart(2,'0')}</span>
+                <span class="idx-name">${e.t}</span>
+                <span class="idx-dot ${BUILT_KEYS.has(e.key)?'ready':'todo'}"></span>
+              </button>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+  `;
+  return shell('Índice do protótipo','Navegação de referência — não faz parte do produto final', '', body);
+}
+
+/* ============================================================
+   Screen registry
+   ============================================================ */
+const SCREENS = {
+  'dashboard': screenDashboard,
+  'pagamentos-lista': screenPagamentosLista,
+  'pagamento-detalhe': screenPagamentoDetalhe,
+  'pagamento-form': screenPagamentoForm,
+  'reembolsos-lista': screenReembolsosLista,
+  'reembolso-detalhe': screenReembolsoDetalhe,
+  'reembolso-form': screenReembolsoForm,
+  'colaboradores-lista': screenColaboradoresLista,
+  'colaborador-detalhe': screenColaboradorDetalhe,
+  'colaborador-form': screenColaboradorForm,
+  'fornecedores-lista': screenFornecedoresLista,
+  'fornecedor-detalhe': screenFornecedorDetalhe,
+  'fornecedor-form': screenFornecedorForm,
+  'contratos-lista': screenContratosLista,
+  'contrato-detalhe': screenContratoDetalhe,
+  'contrato-form': screenContratoForm,
+  'categorias-lista': screenCategoriasLista,
+  'relatorios': screenRelatorios,
+  'auditoria': screenAuditoria,
+  'login': screenLogin,
+  'esqueci-senha': screenEsqueciSenha,
+  'redefinir-senha': screenRedefinirSenha,
+  'confirmar-senha': screenConfirmarSenha,
+  'verificar-email': screenVerificarEmail,
+  'meu-perfil': screenMeuPerfil,
+  'usuarios-lista': screenUsuariosLista,
+  'erro-403': screenErro403,
+  'erro-404': screenErro404,
+  'estados': screenEstados,
+  'prototype-index': screenPrototypeIndex
+};
+
+
+/* ============================================================
+   Prototype chrome topbar (meta — screen picker, viewport toggle)
+   ============================================================ */
+function renderProtoTopbar(){
+  const bar = document.getElementById('proto-topbar');
+  const readyCount = SCREEN_INDEX.filter(e=>BUILT_KEYS.has(e.key)).length;
+  const groups = {};
+  SCREEN_INDEX.forEach(e=>{ (groups[e.g]=groups[e.g]||[]).push(e); });
+  const currentEntry = SCREEN_INDEX.find(e=>e.key===state.screen && (!state.modal ? !e.modal : e.modal===state.modal.type))
+                     || SCREEN_INDEX.find(e=>e.key===state.screen) || SCREEN_INDEX[0];
+
+  bar.innerHTML = `
+    <div class="proto-brand"><span class="dot"></span>PayrollOS — Protótipo</div>
+    <div class="proto-sep"></div>
+    <button class="proto-nav-btn" onclick="stepIndex(-1)" title="Tela anterior">${icon('chevronLeft',13)}</button>
+    <select class="proto-select" onchange="selectFromIndex(parseInt(this.value,10))">
+      ${Object.entries(groups).map(([g,items])=>`
+        <optgroup label="${g}">
+          ${items.map(e=>`<option value="${e.n}" ${e.n===currentEntry.n?'selected':''}>${String(e.n).padStart(2,'0')} · ${e.t}</option>`).join('')}
+        </optgroup>`).join('')}
+    </select>
+    <button class="proto-nav-btn" onclick="stepIndex(1)" title="Próxima tela">${icon('chevronRight',13)}</button>
+    <button class="proto-nav-btn" onclick="go('prototype-index')">${icon('menu',13)}Índice</button>
+    <span class="proto-count"><b>${readyCount}/${SCREEN_INDEX.length}</b> telas desenhadas</span>
+    <div class="proto-right">
+      <div class="proto-viewport-toggle">
+        <button class="${state.viewport==='desktop'?'active':''}" onclick="setViewport('desktop')">${icon('file',13)}Desktop</button>
+        <button class="${state.viewport==='mobile'?'active':''}" onclick="setViewport('mobile')">${icon('receipt',13)}Mobile</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ============================================================
+   Expose handlers referenced by inline HTML onclick attributes
+   ============================================================ */
+window.go = go;
+window.openModal = openModal;
+window.closeModal = closeModal;
+window.toggleDrawer = toggleDrawer;
+window.setViewport = setViewport;
+window.pushToast = pushToast;
+window.selectFromIndex = selectFromIndex;
+window.stepIndex = stepIndex;
+
+/* ============================================================
+   Init
+   ============================================================ */
+render();
+
+})();
+
+</script>
+</body>
+</html>

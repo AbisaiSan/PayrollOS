@@ -1,88 +1,24 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useToast } from 'primevue/usetoast';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Menu from 'primevue/menu';
+import Icone from '@/Components/Icone.vue';
 import LogoCorebanx from '@/Components/LogoCorebanx.vue';
-import { usePermissoes } from '@/Composables/usePermissoes';
 import type { PageProps } from '@/types';
 
 const page = usePage<PageProps>();
 const toast = useToast();
-const { pode } = usePermissoes();
 
-const menuAberto = ref(false);
+const drawerAberto = ref(false);
 const menuUsuario = ref();
 
-interface ItemMenu {
-    rotulo: string;
-    rota: string;
-    icone: string;
-    permissao?: string;
-}
-
 /**
- * Ordem pensada para o uso diario do financeiro: o que se lanca todo dia vem
- * antes do que se cadastra uma vez.
+ * O menu vem pronto do backend (App\Support\Navegacao), já filtrado pelas
+ * permissões do usuário. Nenhum slug de permissão é repetido aqui.
  */
-const itens: ItemMenu[] = [
-    { rotulo: 'Dashboard', rota: 'dashboard', icone: 'pi pi-home' },
-    {
-        rotulo: 'Pagamentos',
-        rota: 'pagamentos.index',
-        icone: 'pi pi-wallet',
-        permissao: 'pagamentos.ver',
-    },
-    {
-        rotulo: 'Reembolsos',
-        rota: 'reembolsos.index',
-        icone: 'pi pi-receipt',
-        permissao: 'reembolsos.ver',
-    },
-    {
-        rotulo: 'Colaboradores',
-        rota: 'colaboradores.index',
-        icone: 'pi pi-users',
-        permissao: 'colaboradores.ver',
-    },
-    {
-        rotulo: 'Fornecedores',
-        rota: 'fornecedores.index',
-        icone: 'pi pi-briefcase',
-        permissao: 'fornecedores.ver',
-    },
-    {
-        rotulo: 'Contratos',
-        rota: 'contratos.index',
-        icone: 'pi pi-file',
-        permissao: 'contratos.ver',
-    },
-    {
-        rotulo: 'Categorias',
-        rota: 'categorias.index',
-        icone: 'pi pi-tags',
-        permissao: 'categorias.ver',
-    },
-    {
-        rotulo: 'Relatórios',
-        rota: 'relatorios.index',
-        icone: 'pi pi-chart-bar',
-        permissao: 'relatorios.ver',
-    },
-    {
-        rotulo: 'Auditoria',
-        rota: 'auditoria.index',
-        icone: 'pi pi-history',
-        permissao: 'auditoria.ver',
-    },
-];
-
-const itensVisiveis = computed(() =>
-    itens.filter((item) => !item.permissao || pode(item.permissao)),
-);
-
 const itensUsuario = [
     {
         label: 'Meu perfil',
@@ -97,10 +33,24 @@ const itensUsuario = [
 ];
 
 const ehRotaAtiva = (rota: string) => {
+    // "colaboradores.index" acende também em create, edit e show.
     const base = rota.replace(/\.index$/, '');
 
     return route().current(rota) || route().current(`${base}.*`);
 };
+
+const iniciais = (nome: string) =>
+    nome
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((parte) => parte.charAt(0).toUpperCase())
+        .join('');
+
+// Fecha o drawer ao navegar, senão ele fica aberto por cima da tela nova.
+router.on('navigate', () => {
+    drawerAberto.value = false;
+});
 
 // Mensagens vindas de redirect (with('sucesso', ...)) viram toast.
 watch(
@@ -129,88 +79,106 @@ watch(
 </script>
 
 <template>
-    <div class="min-h-screen bg-corebanx-cinza">
+    <div class="min-h-screen bg-app-bg">
         <Toast position="top-right" />
         <ConfirmDialog />
 
-        <!-- Sidebar: fixa no desktop, drawer no mobile -->
+        <!-- Sidebar: fixa no desktop, drawer sobreposto abaixo de 1024px -->
         <aside
-            class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-corebanx-azul transition-transform duration-200 lg:translate-x-0"
-            :class="menuAberto ? 'translate-x-0' : '-translate-x-full'"
+            class="fixed inset-y-0 left-0 z-40 flex w-sidebar flex-col gap-1 bg-gradient-to-b from-azul-600 to-azul-700 px-3.5 py-5 text-white transition-transform duration-200 lg:translate-x-0"
+            :class="drawerAberto ? 'translate-x-0 shadow-pop' : '-translate-x-full'"
         >
-            <div class="flex h-16 items-center px-5">
-                <Link :href="route('dashboard')">
-                    <LogoCorebanx />
-                </Link>
-            </div>
+            <Link :href="route('dashboard')" class="flex items-center gap-2.5 px-2 pb-[22px] pt-1.5">
+                <LogoCorebanx />
+            </Link>
 
-            <nav class="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
-                <Link
-                    v-for="item in itensVisiveis"
-                    :key="item.rota"
-                    :href="route(item.rota)"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
-                    :class="
-                        ehRotaAtiva(item.rota)
-                            ? 'bg-corebanx-laranja text-white'
-                            : 'text-white/70 hover:bg-white/10 hover:text-white'
-                    "
-                    @click="menuAberto = false"
-                >
-                    <i :class="item.icone" class="text-base" />
-                    {{ item.rotulo }}
-                </Link>
+            <nav class="flex flex-1 flex-col overflow-y-auto">
+                <template v-for="grupo in page.props.navegacao ?? []" :key="grupo.titulo">
+                    <p
+                        class="px-2.5 pb-1.5 pt-3.5 text-[10.5px] uppercase tracking-[0.07em] text-white/40"
+                    >
+                        {{ grupo.titulo }}
+                    </p>
+
+                    <Link
+                        v-for="item in grupo.itens"
+                        :key="item.rota"
+                        :href="route(item.rota)"
+                        class="flex w-full items-center gap-[11px] rounded-lg px-2.5 py-[9px] text-[13.75px] font-medium transition-colors"
+                        :class="
+                            ehRotaAtiva(item.rota)
+                                ? 'bg-laranja-500 text-white'
+                                : 'text-white/70 hover:bg-white/10 hover:text-white'
+                        "
+                    >
+                        <Icone :nome="item.icone" :tamanho="17" class="shrink-0 opacity-85" />
+                        {{ item.rotulo }}
+                    </Link>
+                </template>
             </nav>
 
-            <div class="border-t border-white/10 px-5 py-3">
-                <p class="text-[11px] leading-relaxed text-white/40">
-                    Sistema de controle. Não executa pagamentos.
-                </p>
-            </div>
+            <p
+                class="border-t border-white/15 px-2.5 pb-1 pt-3.5 text-[10.75px] leading-[1.5] text-white/50"
+            >
+                Sistema de controle. Não executa pagamentos.
+            </p>
         </aside>
 
-        <!-- Fundo escuro do drawer no mobile -->
+        <!-- Scrim do drawer no mobile -->
         <div
-            v-if="menuAberto"
-            class="fixed inset-0 z-30 bg-corebanx-preto/50 lg:hidden"
-            @click="menuAberto = false"
+            v-if="drawerAberto"
+            class="fixed inset-0 z-30 bg-ink/45 lg:hidden"
+            aria-hidden="true"
+            @click="drawerAberto = false"
         />
 
-        <div class="lg:pl-64">
+        <div class="lg:pl-sidebar">
             <header
-                class="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-black/5 bg-white px-4 sm:px-6"
+                class="sticky top-0 z-20 flex h-topbar items-center gap-3.5 border-b border-ink-8 bg-white px-3.5 sm:px-6"
             >
                 <button
                     type="button"
-                    class="rounded-lg p-2 text-corebanx-preto/60 hover:bg-corebanx-cinza lg:hidden"
+                    class="rounded-[7px] p-1.5 text-ink-70 hover:bg-ink-8 lg:hidden"
                     aria-label="Abrir menu"
-                    @click="menuAberto = !menuAberto"
+                    @click="drawerAberto = !drawerAberto"
                 >
-                    <i class="pi pi-bars" />
+                    <Icone nome="menu" :tamanho="20" />
                 </button>
 
                 <div class="min-w-0 flex-1">
                     <slot name="header" />
                 </div>
 
-                <button
-                    type="button"
-                    class="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm hover:bg-corebanx-cinza"
-                    aria-haspopup="true"
-                    @click="menuUsuario.toggle($event)"
-                >
-                    <span
-                        class="flex h-8 w-8 items-center justify-center rounded-full bg-corebanx-azul text-xs font-semibold text-white"
+                <div class="ml-auto flex shrink-0 items-center gap-2.5">
+                    <button
+                        type="button"
+                        class="flex items-center gap-2.5 rounded-lg py-1 pl-3 pr-1.5 hover:bg-ink-8 sm:border-l sm:border-ink-8"
+                        aria-haspopup="true"
+                        @click="menuUsuario.toggle($event)"
                     >
-                        {{ page.props.auth.user.name.charAt(0).toUpperCase() }}
-                    </span>
-                    <span class="hidden font-medium text-corebanx-preto sm:block">
-                        {{ page.props.auth.user.name }}
-                    </span>
-                    <i class="pi pi-angle-down text-xs text-corebanx-preto/40" />
-                </button>
+                        <span
+                            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-azul-600 text-[13px] font-semibold text-white"
+                        >
+                            {{ iniciais(page.props.auth.user.name) }}
+                        </span>
 
-                <Menu ref="menuUsuario" :model="itensUsuario" :popup="true" />
+                        <span class="hidden text-left leading-[1.25] sm:block">
+                            <span class="block text-[12.75px] font-semibold">
+                                {{ page.props.auth.user.name }}
+                            </span>
+                            <span
+                                v-if="page.props.auth.perfilRotulo"
+                                class="block text-[11px] text-ink-55"
+                            >
+                                {{ page.props.auth.perfilRotulo }}
+                            </span>
+                        </span>
+
+                        <Icone nome="chevronDown" :tamanho="15" class="text-ink-55" />
+                    </button>
+
+                    <Menu ref="menuUsuario" :model="itensUsuario" :popup="true" />
+                </div>
             </header>
 
             <main class="p-4 sm:p-6">

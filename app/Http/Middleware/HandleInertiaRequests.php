@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Navegacao;
+use App\Support\Perfis;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -39,7 +41,14 @@ class HandleInertiaRequests extends Middleware
                 // continua sendo a policy no backend.
                 'permissoes' => $usuario?->getAllPermissions()->pluck('name')->all() ?? [],
                 'perfis' => $usuario?->getRoleNames()->all() ?? [],
+                'perfilRotulo' => $usuario?->getRoleNames()->first()
+                    ? Perfis::rotulo($usuario->getRoleNames()->first())
+                    : null,
             ],
+
+            // Menu ja filtrado pelas permissoes do usuario. Vem do backend para que
+            // os slugs de permissao fiquem so em App\Support\Permissoes.
+            'navegacao' => fn () => Navegacao::paraUsuario($usuario),
             'flash' => [
                 'sucesso' => fn () => $request->session()->get('sucesso'),
                 'erro' => fn () => $request->session()->get('erro'),

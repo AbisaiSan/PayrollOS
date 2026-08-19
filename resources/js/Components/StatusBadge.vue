@@ -1,54 +1,76 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Tag from 'primevue/tag';
+import Icone from '@/Components/Icone.vue';
 
-const props = defineProps<{
-    status: string;
-    /** Espelha o rotulo do enum PHP; sem ele, o proprio valor e exibido. */
-    rotulo?: string;
-}>();
+type Severidade = 'sucesso' | 'info' | 'atencao' | 'perigo' | 'neutro';
 
-/** Mesmas severidades de StatusPagamento::severidade() e StatusReembolso::severidade(). */
-const severidades: Record<string, string> = {
-    pendente: 'warn',
-    agendado: 'info',
-    pago: 'success',
-    atrasado: 'danger',
-    cancelado: 'secondary',
-    aprovado: 'info',
-    rejeitado: 'danger',
-    ativo: 'success',
-    ativa: 'success',
-    inativo: 'secondary',
-    inativa: 'secondary',
-    afastado: 'warn',
-    desligado: 'secondary',
-    suspenso: 'warn',
-    encerrado: 'secondary',
+interface Definicao {
+    rotulo: string;
+    severidade: Severidade;
+    icone: string;
+}
+
+/**
+ * Chip de status.
+ *
+ * Cada severidade tem ícone próprio, não só cor: quem não distingue vermelho de
+ * verde ainda precisa achar o atraso varrendo a lista.
+ *
+ * Os status de pagamento entram aqui na Tarefa 1; os demais vocabulários
+ * (reembolso, colaborador, fornecedor, contrato) entram nas tarefas 9, 13, 19 e 22.
+ */
+const PAGAMENTO: Record<string, Definicao> = {
+    pendente: { rotulo: 'Pendente', severidade: 'atencao', icone: 'clockOutline' },
+    agendado: { rotulo: 'Agendado', severidade: 'info', icone: 'calendar' },
+    pago: { rotulo: 'Pago', severidade: 'sucesso', icone: 'checkCircle' },
+    atrasado: { rotulo: 'Atrasado', severidade: 'perigo', icone: 'alertTriangle' },
+    cancelado: { rotulo: 'Cancelado', severidade: 'neutro', icone: 'slashCircle' },
 };
 
-const rotulos: Record<string, string> = {
-    pendente: 'Pendente',
-    agendado: 'Agendado',
-    pago: 'Pago',
-    atrasado: 'Atrasado',
-    cancelado: 'Cancelado',
-    aprovado: 'Aprovado',
-    rejeitado: 'Rejeitado',
-    ativo: 'Ativo',
-    ativa: 'Ativa',
-    inativo: 'Inativo',
-    inativa: 'Inativa',
-    afastado: 'Afastado',
-    desligado: 'Desligado',
-    suspenso: 'Suspenso',
-    encerrado: 'Encerrado',
-};
+const props = withDefaults(
+    defineProps<{
+        status: string;
+        /** Sobrescreve o rótulo do mapa — use quando o backend já mandar o texto pronto. */
+        rotulo?: string;
+        tamanho?: 'sm' | 'md';
+    }>(),
+    { tamanho: 'md' },
+);
 
-const severidade = computed(() => severidades[props.status] ?? 'secondary');
-const texto = computed(() => props.rotulo ?? rotulos[props.status] ?? props.status);
+/**
+ * O banco guarda status como string, não ENUM nativo, justamente para aceitar
+ * valores novos sem migração (ex: quando o fluxo de aprovação entrar). Um valor
+ * desconhecido cai em neutro e mostra o próprio valor, em vez de quebrar a tela.
+ */
+const definicao = computed<Definicao>(
+    () =>
+        PAGAMENTO[props.status] ?? {
+            rotulo: props.status,
+            severidade: 'neutro',
+            icone: 'info',
+        },
+);
+
+const texto = computed(() => props.rotulo ?? definicao.value.rotulo);
+
+const CLASSES: Record<Severidade, string> = {
+    sucesso: 'bg-sucesso-bg text-sucesso border-sucesso-line',
+    info: 'bg-info-bg text-info border-info-line',
+    atencao: 'bg-atencao-bg text-atencao border-atencao-line',
+    perigo: 'bg-perigo-bg text-perigo border-perigo-line',
+    neutro: 'bg-neutro-bg text-neutro border-neutro-line',
+};
 </script>
 
 <template>
-    <Tag :severity="severidade" :value="texto" rounded />
+    <span
+        class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border font-semibold"
+        :class="[
+            CLASSES[definicao.severidade],
+            tamanho === 'sm' ? 'py-0.5 pl-1.5 pr-2 text-[11.5px]' : 'py-1 pl-[7px] pr-[9px] text-[12.25px]',
+        ]"
+    >
+        <Icone :nome="definicao.icone" :tamanho="tamanho === 'sm' ? 12 : 13" />
+        {{ texto }}
+    </span>
 </template>

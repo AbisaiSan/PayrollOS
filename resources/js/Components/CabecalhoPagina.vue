@@ -6,17 +6,18 @@ defineProps<{
 </script>
 
 <template>
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
         <div class="min-w-0">
-            <h1 class="truncate text-lg font-semibold text-corebanx-preto">
+            <h1 class="truncate text-[16.5px] font-semibold -tracking-[0.01em] text-ink">
                 {{ titulo }}
             </h1>
-            <p v-if="descricao" class="mt-0.5 truncate text-sm text-corebanx-preto/50">
+            <p v-if="descricao" class="mt-px truncate text-[12.5px] text-ink-55">
                 {{ descricao }}
             </p>
         </div>
 
-        <div v-if="$slots.acoes" class="flex items-center gap-2">
+        <!-- Ações da tela: ficam à direita do título, logo antes do menu do usuário. -->
+        <div v-if="$slots.acoes" class="ml-auto flex shrink-0 items-center gap-2.5">
             <slot name="acoes" />
         </div>
     </div>

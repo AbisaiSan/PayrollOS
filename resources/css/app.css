@@ -1,3 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-app-bg text-ink antialiased;
+    }
+
+    /* Foco sempre visível, em azul para não competir com o laranja de ação. */
+    :focus-visible {
+        outline: 2px solid theme('colors.azul.500');
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background: theme('colors.laranja.200');
+    }
+}
+
+@layer components {
+    /*
+     * Todo número que entra em coluna — valor, data, documento, contador — usa
+     * esta classe. Sem numeral tabular as colunas desalinham a cada linha.
+     */
+    .mono {
+        @apply font-mono;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+/*
+ * Toast e ConfirmDialog: fundo escuro e sólido, como no protótipo. Ficam fora do
+ * @layer porque precisam vencer o CSS que o PrimeVue injeta em runtime.
+ */
+.p-toast .p-toast-message {
+    @apply rounded-[10px] border-0 shadow-pop;
+}
+
+.p-toast .p-toast-message-success {
+    background: #0f3d24;
+    color: #fff;
+}
+
+.p-toast .p-toast-message-error {
+    background: #4a130e;
+    color: #fff;
+}
+
+.p-toast .p-toast-message-success .p-toast-detail,
+.p-toast .p-toast-message-error .p-toast-detail {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.p-toast .p-toast-message-success .p-toast-close-button,
+.p-toast .p-toast-message-error .p-toast-close-button {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.p-confirmdialog {
+    @apply rounded-lg shadow-pop;
+}

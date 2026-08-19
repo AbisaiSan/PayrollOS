@@ -124,6 +124,19 @@ export interface HistoricoStatus {
     usuario?: { id: number; name: string } | null;
 }
 
+/** Item do menu lateral, montado por App\Support\Navegacao. */
+export interface ItemNavegacao {
+    rotulo: string;
+    rota: string;
+    icone: string;
+    permissao: string | null;
+}
+
+export interface GrupoNavegacao {
+    titulo: string;
+    itens: ItemNavegacao[];
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
@@ -132,7 +145,10 @@ export type PageProps<
         /** Permissoes efetivas do usuario, para esconder acoes na UI. */
         permissoes: string[];
         perfis: string[];
+        perfilRotulo: string | null;
     };
+    /** Menu ja filtrado pelo backend conforme as permissoes do usuario. */
+    navegacao: GrupoNavegacao[];
     flash: {
         sucesso?: string;
         erro?: string;

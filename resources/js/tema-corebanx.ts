@@ -2,12 +2,25 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 
 /**
- * Preset do PrimeVue com a identidade visual Corebanx.
+ * Preset do PrimeVue com os tokens do PayrollOS.
  *
- * O laranja (#F37B46) e a cor de acao; o azul (#214396) fica reservado para o
- * cromo da navegacao, para nao competir com os botoes nas telas de lancamento.
+ * O laranja (#F37B46) é a cor de ação; o azul (#214396) fica reservado para o
+ * cromo da navegação, para não competir com os botões nas telas de lançamento.
+ *
+ * As superfícies saem do quase-preto da marca (#0D0E0E), então os cinzas puxam
+ * para a tinta em vez de serem neutros genéricos.
  */
 export const TemaCorebanx = definePreset(Aura, {
+    primitive: {
+        borderRadius: {
+            none: '0',
+            xs: '4px',
+            sm: '6px',
+            md: '8px',
+            lg: '10px',
+            xl: '14px',
+        },
+    },
     semantic: {
         primary: {
             50: '#FEF3ED',
@@ -21,6 +34,17 @@ export const TemaCorebanx = definePreset(Aura, {
             800: '#87381A',
             900: '#5C2712',
             950: '#3B190C',
+        },
+        formField: {
+            paddingX: '11px',
+            paddingY: '9px',
+            borderRadius: '8px',
+            focusRing: {
+                width: '2px',
+                style: 'solid',
+                color: '#5372CB',
+                offset: '2px',
+            },
         },
         colorScheme: {
             light: {
@@ -44,8 +68,12 @@ export const TemaCorebanx = definePreset(Aura, {
                     hoverColor: '#DB5F26',
                     activeColor: '#B14A1D',
                 },
-                formField: {
-                    borderRadius: '0.5rem',
+                text: {
+                    color: 'rgba(13,14,14,.90)',
+                    mutedColor: 'rgba(13,14,14,.55)',
+                },
+                content: {
+                    borderColor: 'rgba(13,14,14,.12)',
                 },
             },
             dark: {
