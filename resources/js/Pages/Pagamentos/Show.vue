@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import { useConfirm } from 'primevue/useconfirm';
@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import HistoricoStatusTimeline from '@/Components/HistoricoStatusTimeline.vue';
+import ModalConfirmarPagamento from '@/Components/ModalConfirmarPagamento.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -42,6 +43,8 @@ const { formatarMoeda, formatarData, formatarCompetencia, formatarDataHora, venc
     useFormato();
 const { pode } = usePermissoes();
 const confirm = useConfirm();
+
+const modalConfirmar = ref(false);
 
 const FORMA_PAGAMENTO: Record<string, string> = {
     pix: 'Pix',
@@ -171,8 +174,7 @@ const cancelar = () => {
                             v-if="pode('pagamentos.confirmar') && podeIrPara('pago')"
                             label="Confirmar pagamento"
                             size="small"
-                            disabled
-                            title="O modal de confirmação entra na próxima etapa (tarefa 5)"
+                            @click="modalConfirmar = true"
                         >
                             <template #icon><Icone nome="checkCircle" :tamanho="16" /></template>
                         </Button>
@@ -264,5 +266,7 @@ const cancelar = () => {
                 <HistoricoStatusTimeline :eventos="pagamento.historico_status ?? []" />
             </div>
         </div>
+
+        <ModalConfirmarPagamento v-model:visivel="modalConfirmar" :pagamento="pagamento" />
     </AuthenticatedLayout>
 </template>
