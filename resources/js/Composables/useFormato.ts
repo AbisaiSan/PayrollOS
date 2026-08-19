@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
+import type { ContaBancaria } from '@/types';
 
 dayjs.extend(customParseFormat);
 dayjs.locale('pt-br');
@@ -54,6 +55,34 @@ export function useFormato() {
     const diasAte = (data: string | null | undefined) =>
         data ? dayjs(data).startOf('day').diff(dayjs().startOf('day'), 'day') : null;
 
+    /** "hoje", "amanha", "em 3 dias", "vencido ha 5 dias". */
+    const vencimentoRelativo = (data: string | null | undefined) => {
+        const dias = diasAte(data);
+
+        if (dias === null) return '';
+        if (dias === 0) return 'hoje';
+        if (dias === 1) return 'amanhã';
+        if (dias === -1) return 'venceu ontem';
+        if (dias < 0) return `venceu há ${Math.abs(dias)} dias`;
+
+        return `em ${dias} dias`;
+    };
+
+    /**
+     * Resumo legivel da conta: "Itau, Ag. 1234, C/C 56789-0".
+     *
+     * A listagem recebe isto pronto do backend; nas telas que recebem a conta como
+     * objeto, monta-se aqui.
+     */
+    const resumoConta = (conta: ContaBancaria | null | undefined) => {
+        if (!conta) return '—';
+
+        const numero = conta.digito ? `${conta.conta}-${conta.digito}` : conta.conta;
+        const tipo = conta.tipo_conta === 'poupanca' ? 'Poup.' : 'C/C';
+
+        return `${conta.banco}, Ag. ${conta.agencia}, ${tipo} ${numero}`;
+    };
+
     /**
      * O DatePicker do PrimeVue trabalha com Date; o backend espera AAAA-MM-DD.
      * Estes dois fazem a ponte nos dois sentidos.
@@ -71,6 +100,8 @@ export function useFormato() {
         formatarCompetencia,
         formatarDocumento,
         diasAte,
+        vencimentoRelativo,
+        resumoConta,
         paraDate,
         paraIso,
     };

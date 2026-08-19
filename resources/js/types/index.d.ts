@@ -121,7 +121,17 @@ export interface HistoricoStatus {
     status_novo: string;
     observacao: string | null;
     created_at: string;
+    /** Nulo quando a mudanca veio de uma rotina agendada, sem usuario autenticado. */
     usuario?: { id: number; name: string } | null;
+}
+
+export interface Anexo {
+    id: number;
+    nome_arquivo: string;
+    tipo_arquivo: string | null;
+    tamanho: number;
+    created_at: string;
+    enviado_por?: { id: number; name: string } | null;
 }
 
 /** Item do menu lateral, montado por App\Support\Navegacao. */
