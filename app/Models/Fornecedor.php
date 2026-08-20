@@ -89,10 +89,13 @@ class Fornecedor extends Model
         $termo = trim($termo);
         $somenteDigitos = preg_replace('/\D/', '', $termo);
 
-        return $query->where(function (Builder $q) use ($termo, $somenteDigitos) {
-            $q->where('razao_social', 'like', "%{$termo}%")
-                ->orWhere('nome_fantasia', 'like', "%{$termo}%")
-                ->orWhere('email', 'like', "%{$termo}%");
+        // Ver a nota em Colaborador::scopeBusca: LIKE no PostgreSQL e sensivel a caixa.
+        $padrao = '%'.mb_strtolower($termo).'%';
+
+        return $query->where(function (Builder $q) use ($padrao, $somenteDigitos) {
+            $q->whereRaw('LOWER(razao_social) LIKE ?', [$padrao])
+                ->orWhereRaw('LOWER(nome_fantasia) LIKE ?', [$padrao])
+                ->orWhereRaw('LOWER(email) LIKE ?', [$padrao]);
 
             if ($somenteDigitos !== '') {
                 $q->orWhere('documento', 'like', "%{$somenteDigitos}%");

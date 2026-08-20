@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnexoController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\BeneficiarioController;
 use App\Http\Controllers\CategoriaPagamentoController;
 use App\Http\Controllers\ColaboradorController;
 use App\Http\Controllers\ContaBancariaController;
@@ -60,6 +61,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('{conta}/inativar', [ContaBancariaController::class, 'inativar'])->name('inativar');
             Route::post('{conta}/reativar', [ContaBancariaController::class, 'reativar'])->name('reativar');
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Busca de beneficiarios (apoio aos formularios de lancamento)
+    |--------------------------------------------------------------------------
+    |
+    | Respondem JSON, nao Inertia: o formulario de pagamento consulta enquanto o
+    | usuario digita, sem trocar de pagina.
+    |
+    */
+    Route::prefix('beneficiarios')->name('beneficiarios.')->group(function () {
+        Route::get('buscar', [BeneficiarioController::class, 'buscar'])->name('buscar');
+        Route::get('{tipo}/{id}/dados', [BeneficiarioController::class, 'dados'])
+            ->whereIn('tipo', ['colaborador', 'fornecedor'])
+            ->whereNumber('id')
+            ->name('dados');
+    });
 
     /*
     |--------------------------------------------------------------------------

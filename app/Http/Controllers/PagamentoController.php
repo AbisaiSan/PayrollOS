@@ -35,7 +35,11 @@ class PagamentoController extends Controller
             ->when($request->filled('competencia'), fn ($q) => $q->daCompetencia($request->string('competencia')->toString()))
             ->when($request->filled('beneficiario_tipo'), fn ($q) => $q->where('payable_type', $request->string('beneficiario_tipo')))
             ->when($request->filled('beneficiario_id'), fn ($q) => $q->where('payable_id', $request->integer('beneficiario_id')))
-            ->when($request->filled('busca'), fn ($q) => $q->where('descricao', 'like', '%'.$request->string('busca')->toString().'%'))
+            // LOWER dos dois lados: LIKE no PostgreSQL e sensivel a caixa.
+            ->when($request->filled('busca'), fn ($q) => $q->whereRaw(
+                'LOWER(descricao) LIKE ?',
+                ['%'.mb_strtolower($request->string('busca')->toString()).'%']
+            ))
             ->noPeriodo($request->string('inicio')->toString() ?: null, $request->string('fim')->toString() ?: null)
             ->orderBy($request->string('ordenar_por', 'data_vencimento')->toString(), $request->string('direcao', 'asc')->toString())
             ->paginate($request->integer('por_pagina', 20))

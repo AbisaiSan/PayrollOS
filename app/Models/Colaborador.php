@@ -93,10 +93,14 @@ class Colaborador extends Model
         $termo = trim($termo);
         $somenteDigitos = preg_replace('/\D/', '', $termo);
 
-        return $query->where(function (Builder $q) use ($termo, $somenteDigitos) {
-            $q->where('nome', 'like', "%{$termo}%")
-                ->orWhere('email', 'like', "%{$termo}%")
-                ->orWhere('cargo', 'like', "%{$termo}%");
+        // LOWER dos dois lados: no PostgreSQL o LIKE e sensivel a caixa, entao
+        // buscar "marina" nao encontraria "Marina". LOWER funciona nos tres drivers.
+        $padrao = '%'.mb_strtolower($termo).'%';
+
+        return $query->where(function (Builder $q) use ($padrao, $somenteDigitos) {
+            $q->whereRaw('LOWER(nome) LIKE ?', [$padrao])
+                ->orWhereRaw('LOWER(email) LIKE ?', [$padrao])
+                ->orWhereRaw('LOWER(cargo) LIKE ?', [$padrao]);
 
             if ($somenteDigitos !== '') {
                 $q->orWhere('cpf', 'like', "%{$somenteDigitos}%");

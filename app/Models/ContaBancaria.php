@@ -85,7 +85,10 @@ class ContaBancaria extends Model
      */
     public function getResumoAttribute(): string
     {
-        $conta = $this->digito ? "{$this->conta}-{$this->digito}" : $this->conta;
+        // Comparar com null/vazio, nao testar veracidade: o digito "0" e falsy em PHP
+        // e a conta apareceria como "56789" em vez de "56789-0".
+        $temDigito = $this->digito !== null && $this->digito !== '';
+        $conta = $temDigito ? "{$this->conta}-{$this->digito}" : $this->conta;
         $tipo = $this->tipo_conta === TipoConta::Poupanca ? 'Poup.' : 'C/C';
 
         return "{$this->banco}, Ag. {$this->agencia}, {$tipo} {$conta}";
