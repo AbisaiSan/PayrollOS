@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
+import Button from 'primevue/button';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import CardIndicador from '@/Components/CardIndicador.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
+import { usePermissoes } from '@/Composables/usePermissoes';
+import type { PageProps } from '@/types';
 
 interface ProximoVencimento {
     id: number;
@@ -29,26 +34,36 @@ const props = defineProps<{
     proximosVencimentos: ProximoVencimento[];
 }>();
 
-const { formatarMoeda, formatarData, diasAte } = useFormato();
+const page = usePage<PageProps>();
+const { formatarMoeda, formatarData, vencimentoRelativo } = useFormato();
+const { pode } = usePermissoes();
 
-const totalCategorias = () =>
-    props.porCategoria.reduce((soma, linha) => soma + linha.total, 0);
+const primeiroNome = computed(() => page.props.auth.user.name.split(' ')[0]);
 
-const percentual = (valor: number) => {
-    const total = totalCategorias();
+const mesCorrente = computed(() => {
+    const texto = new Intl.DateTimeFormat('pt-BR', {
+        month: 'long',
+        year: 'numeric',
+    }).format(new Date());
 
-    return total > 0 ? (valor / total) * 100 : 0;
-};
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+});
 
-const legendaVencimento = (data: string) => {
-    const dias = diasAte(data);
+/**
+ * A barra é proporcional à maior categoria, não ao total.
+ *
+ * Com o total, uma categoria dominante — folha, quase sempre — esmaga todas as
+ * outras em barras de poucos pixels, e a comparação entre elas se perde.
+ */
+const maiorCategoria = computed(() =>
+    props.porCategoria.reduce((maior, linha) => Math.max(maior, linha.total), 0),
+);
 
-    if (dias === null) return '';
-    if (dias < 0) return `${Math.abs(dias)} d atrás`;
-    if (dias === 0) return 'hoje';
-    if (dias === 1) return 'amanhã';
+const proporcao = (valor: number) =>
+    maiorCategoria.value > 0 ? Math.round((valor / maiorCategoria.value) * 100) : 0;
 
-    return `em ${dias} d`;
+const abrirPagamento = (evento: { data: ProximoVencimento }) => {
+    router.get(route('pagamentos.show', evento.data.id));
 };
 </script>
 
@@ -57,140 +72,143 @@ const legendaVencimento = (data: string) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <CabecalhoPagina
-                titulo="Dashboard"
-                :descricao="`Visão do mês corrente`"
-            />
+            <CabecalhoPagina titulo="Dashboard" descricao="Panorama de pagamentos do mês corrente">
+                <template #acoes>
+                    <Link v-if="pode('relatorios.ver')" :href="route('relatorios.index')">
+                        <Button label="Ver relatórios" severity="secondary" outlined size="small">
+                            <template #icon><Icone nome="chart" :tamanho="16" /></template>
+                        </Button>
+                    </Link>
+                </template>
+            </CabecalhoPagina>
         </template>
 
-        <div class="space-y-6">
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <CardIndicador
-                    rotulo="A pagar no mês"
-                    :valor="formatarMoeda(indicadores.aPagarNoMes)"
-                    detalhe="Pendentes, agendados e atrasados"
-                    icone="pi pi-calendar"
-                />
-                <CardIndicador
-                    rotulo="Pago no mês"
-                    :valor="formatarMoeda(indicadores.pagoNoMes)"
-                    detalhe="Confirmado manualmente"
-                    icone="pi pi-check-circle"
-                />
-                <CardIndicador
-                    rotulo="Atrasados"
-                    :valor="formatarMoeda(indicadores.atrasados.valor)"
-                    :detalhe="`${indicadores.atrasados.quantidade} lançamento(s) vencido(s)`"
-                    icone="pi pi-exclamation-triangle"
-                    :alerta="indicadores.atrasados.quantidade > 0"
-                />
-                <CardIndicador
-                    rotulo="Reembolsos pendentes"
-                    :valor="formatarMoeda(indicadores.reembolsosPendentes.valor)"
-                    :detalhe="`${indicadores.reembolsosPendentes.quantidade} solicitação(ões)`"
-                    icone="pi pi-receipt"
-                />
-            </div>
+        <p
+            class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.07em] text-laranja-600"
+        >
+            Visão do mês corrente · {{ mesCorrente }}
+        </p>
+        <h2 class="mb-0.5 text-[20px] font-bold -tracking-[0.01em]">Olá, {{ primeiroNome }}</h2>
+        <p class="mb-5 max-w-[640px] text-[13px] text-ink-55">
+            Panorama de pagamentos, atrasos e reembolsos. Atualizado às 06:15, após a rotina
+            diária de vencimentos.
+        </p>
 
-            <div class="grid gap-6 lg:grid-cols-3">
-                <!-- Proximos vencimentos ocupa mais espaco: e o que se olha primeiro -->
-                <div class="rounded-xl border border-black/5 bg-white lg:col-span-2">
-                    <div class="flex items-center justify-between border-b border-black/5 px-5 py-4">
-                        <h2 class="text-sm font-semibold text-corebanx-preto">
-                            Próximos vencimentos
-                        </h2>
-                        <Link
-                            :href="route('pagamentos.index')"
-                            class="text-sm font-medium text-corebanx-laranja hover:underline"
-                        >
-                            Ver todos
-                        </Link>
-                    </div>
+        <!-- Indicadores -->
+        <div class="mb-5 grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+            <CardIndicador
+                rotulo="A pagar no mês"
+                :valor="formatarMoeda(indicadores.aPagarNoMes)"
+                detalhe="Pendentes, agendados e atrasados"
+                icone="wallet"
+            />
+            <CardIndicador
+                rotulo="Pago no mês"
+                :valor="formatarMoeda(indicadores.pagoNoMes)"
+                detalhe="Confirmado manualmente"
+                icone="checkCircle"
+            />
+            <CardIndicador
+                rotulo="Atrasados"
+                :valor="formatarMoeda(indicadores.atrasados.valor)"
+                :detalhe="`${indicadores.atrasados.quantidade} lançamento(s) vencido(s)`"
+                icone="alertTriangle"
+                :alerta="indicadores.atrasados.quantidade > 0"
+            />
+            <CardIndicador
+                rotulo="Reembolsos pendentes"
+                :valor="formatarMoeda(indicadores.reembolsosPendentes.valor)"
+                :detalhe="`${indicadores.reembolsosPendentes.quantidade} solicitação(ões)`"
+                icone="receipt"
+            />
+        </div>
 
-                    <DataTable
-                        :value="proximosVencimentos"
-                        size="small"
-                        data-key="id"
-                        :pt="{ table: { class: 'text-sm' } }"
+        <div class="grid items-start gap-4 lg:grid-cols-[2fr_1fr]">
+            <!-- Próximos vencimentos -->
+            <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+                <div
+                    class="flex items-baseline justify-between border-b border-ink-8 px-5 py-4"
+                >
+                    <h2 class="text-[14.5px] font-semibold">Próximos vencimentos</h2>
+                    <Link
+                        :href="route('pagamentos.index')"
+                        class="text-[12px] font-semibold text-laranja-600 hover:underline"
                     >
-                        <template #empty>
-                            <p class="py-8 text-center text-sm text-corebanx-preto/45">
-                                Nenhum vencimento nos próximos 7 dias.
-                            </p>
-                        </template>
-
-                        <Column field="descricao" header="Descrição">
-                            <template #body="{ data }">
-                                <Link
-                                    :href="route('pagamentos.show', data.id)"
-                                    class="font-medium text-corebanx-preto hover:text-corebanx-laranja"
-                                >
-                                    {{ data.descricao }}
-                                </Link>
-                                <p class="text-xs text-corebanx-preto/50">
-                                    {{ data.beneficiario }}
-                                </p>
-                            </template>
-                        </Column>
-
-                        <Column field="data_vencimento" header="Vencimento">
-                            <template #body="{ data }">
-                                <span class="tabular-nums">
-                                    {{ formatarData(data.data_vencimento) }}
-                                </span>
-                                <p class="text-xs text-corebanx-preto/50">
-                                    {{ legendaVencimento(data.data_vencimento) }}
-                                </p>
-                            </template>
-                        </Column>
-
-                        <Column field="valor" header="Valor">
-                            <template #body="{ data }">
-                                <span class="font-medium tabular-nums">
-                                    {{ formatarMoeda(data.valor) }}
-                                </span>
-                            </template>
-                        </Column>
-
-                        <Column field="status" header="Status">
-                            <template #body="{ data }">
-                                <StatusBadge :status="data.status" />
-                            </template>
-                        </Column>
-                    </DataTable>
+                        Próximos 7 dias
+                    </Link>
                 </div>
 
-                <div class="rounded-xl border border-black/5 bg-white">
-                    <div class="border-b border-black/5 px-5 py-4">
-                        <h2 class="text-sm font-semibold text-corebanx-preto">
-                            Em aberto por categoria
-                        </h2>
-                    </div>
-
-                    <div class="space-y-4 p-5">
-                        <p
-                            v-if="!porCategoria.length"
-                            class="py-4 text-center text-sm text-corebanx-preto/45"
-                        >
-                            Nada em aberto neste mês.
+                <DataTable
+                    :value="proximosVencimentos"
+                    data-key="id"
+                    size="small"
+                    :row-class="() => 'cursor-pointer'"
+                    @row-click="abrirPagamento"
+                >
+                    <template #empty>
+                        <p class="py-10 text-center text-[13px] text-ink-55">
+                            Nenhum vencimento nos próximos 7 dias.
                         </p>
+                    </template>
 
-                        <div v-for="linha in porCategoria" :key="linha.nome">
-                            <div class="flex items-baseline justify-between gap-3 text-sm">
-                                <span class="truncate text-corebanx-preto/70">
-                                    {{ linha.nome }}
-                                </span>
-                                <span class="shrink-0 font-medium tabular-nums text-corebanx-preto">
-                                    {{ formatarMoeda(linha.total) }}
-                                </span>
+                    <Column field="descricao" header="Descrição">
+                        <template #body="{ data }">
+                            <div class="font-semibold text-ink">{{ data.descricao }}</div>
+                            <div class="mt-0.5 text-[12px] text-ink-55">{{ data.beneficiario }}</div>
+                        </template>
+                    </Column>
+
+                    <Column field="data_vencimento" header="Vencimento">
+                        <template #body="{ data }">
+                            <span class="mono">{{ formatarData(data.data_vencimento) }}</span>
+                            <div class="mt-0.5 text-[12px] text-ink-55">
+                                {{ vencimentoRelativo(data.data_vencimento) }}
                             </div>
-                            <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-corebanx-cinza">
-                                <div
-                                    class="h-full rounded-full bg-corebanx-laranja"
-                                    :style="{ width: `${percentual(linha.total)}%` }"
-                                />
-                            </div>
-                        </div>
+                        </template>
+                    </Column>
+
+                    <Column
+                        field="valor"
+                        header="Valor"
+                        class="text-right"
+                        header-class="!text-right"
+                    >
+                        <template #body="{ data }">
+                            <span class="mono font-semibold">{{ formatarMoeda(data.valor) }}</span>
+                        </template>
+                    </Column>
+
+                    <Column field="status" header="Status">
+                        <template #body="{ data }">
+                            <StatusBadge :status="data.status" />
+                        </template>
+                    </Column>
+                </DataTable>
+            </div>
+
+            <!-- Em aberto por categoria -->
+            <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
+                <h2 class="mb-3.5 text-[14.5px] font-semibold">Em aberto por categoria</h2>
+
+                <p
+                    v-if="!porCategoria.length"
+                    class="py-6 text-center text-[12.75px] text-ink-55"
+                >
+                    Nada em aberto neste mês.
+                </p>
+
+                <div v-for="linha in porCategoria" :key="linha.nome" class="mb-3 last:mb-0">
+                    <div class="mb-1.5 flex items-baseline justify-between gap-3 text-[12.5px]">
+                        <span class="truncate font-medium">{{ linha.nome }}</span>
+                        <span class="mono shrink-0 font-semibold">
+                            {{ formatarMoeda(linha.total) }}
+                        </span>
+                    </div>
+                    <div class="h-1.5 overflow-hidden rounded-full bg-ink-8">
+                        <div
+                            class="h-full rounded-full bg-laranja-400"
+                            :style="{ width: `${proporcao(linha.total)}%` }"
+                        />
                     </div>
                 </div>
             </div>
