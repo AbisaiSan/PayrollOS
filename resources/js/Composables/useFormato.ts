@@ -77,7 +77,10 @@ export function useFormato() {
     const resumoConta = (conta: ContaBancaria | null | undefined) => {
         if (!conta) return '—';
 
-        const numero = conta.digito ? `${conta.conta}-${conta.digito}` : conta.conta;
+        // Comparar com null/vazio: o digito "0" e falsy e a conta sairia como
+        // "56789" em vez de "56789-0".
+        const temDigito = conta.digito !== null && conta.digito !== '';
+        const numero = temDigito ? `${conta.conta}-${conta.digito}` : conta.conta;
         const tipo = conta.tipo_conta === 'poupanca' ? 'Poup.' : 'C/C';
 
         return `${conta.banco}, Ag. ${conta.agencia}, ${tipo} ${numero}`;
