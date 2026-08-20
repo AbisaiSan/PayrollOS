@@ -8,6 +8,7 @@ import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import HistoricoStatusTimeline from '@/Components/HistoricoStatusTimeline.vue';
 import ModalConfirmarPagamento from '@/Components/ModalConfirmarPagamento.vue';
+import ModalMudarStatusPagamento from '@/Components/ModalMudarStatusPagamento.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -45,6 +46,7 @@ const { pode } = usePermissoes();
 const confirm = useConfirm();
 
 const modalConfirmar = ref(false);
+const modalStatus = ref(false);
 
 const FORMA_PAGAMENTO: Record<string, string> = {
     pix: 'Pix',
@@ -185,8 +187,7 @@ const cancelar = () => {
                             severity="secondary"
                             outlined
                             size="small"
-                            disabled
-                            title="O modal de mudança de status entra na próxima etapa (tarefa 6)"
+                            @click="modalStatus = true"
                         >
                             <template #icon><Icone nome="refresh" :tamanho="16" /></template>
                         </Button>
@@ -268,5 +269,11 @@ const cancelar = () => {
         </div>
 
         <ModalConfirmarPagamento v-model:visivel="modalConfirmar" :pagamento="pagamento" />
+
+        <ModalMudarStatusPagamento
+            v-model:visivel="modalStatus"
+            :pagamento="pagamento"
+            :transicoes-permitidas="transicoesPermitidas"
+        />
     </AuthenticatedLayout>
 </template>
