@@ -52,10 +52,38 @@ PostgreSQL.
 | Tela | Estado |
 |---|---|
 | Dashboard | Completo, com indicadores do mês, próximos vencimentos e quebra por categoria |
-| Colaboradores (listagem, formulário, detalhe) | Completo |
+| Colaboradores (listagem, formulário, detalhe) | Completo, ainda no visual anterior ao redesign |
 | Contas bancárias / Pix | Completo, componente reaproveitável entre colaborador e fornecedor |
-| Pagamentos (listagem) | Completo, com filtros e totais |
 | Demais telas | Marcadas com a fase em que entram; o backend correspondente já existe |
+
+### Redesign de telas, em andamento
+
+Segue o `PLANO-DESENVOLVIMENTO-TELAS-PAYROLLOS.md` e o
+`PayrollOS - Prototipo de Design.html`. **8 das 40 tarefas concluídas — toda a
+Prioridade 1.** O ponto de retomada, a infraestrutura acumulada e as decisões
+tomadas estão em [`PROGRESSO-REDESIGN.md`](PROGRESSO-REDESIGN.md).
+
+Já redesenhadas: casca da aplicação (sidebar, drawer mobile, topbar), dashboard,
+e o módulo de pagamentos inteiro — listagem, detalhe, formulário de lançamento e
+os modais de confirmação e de mudança de status.
+
+### Acrescentado ao backend durante o redesign
+
+- `App\Support\Navegacao` — estrutura do menu, filtrada por permissão e entregue
+  pronta ao frontend. Item de menu novo entra aqui, não na Vue.
+- `BeneficiarioController` — rotas `beneficiarios.buscar` e `beneficiarios.dados`,
+  que respondem JSON. Existem porque o formulário de lançamento precisa consultar
+  beneficiários e suas contas ativas enquanto o usuário digita, e não havia
+  nenhuma rota JSON na aplicação.
+
+### Dois defeitos corrigidos
+
+- **Busca não funcionava no PostgreSQL.** Os scopes usavam `LIKE`, sensível a
+  caixa nesse banco, então buscar "marina" não encontrava "Marina". Afetava as
+  listagens de pagamentos, colaboradores e fornecedores. Agora usa `LOWER()` dos
+  dois lados, portável entre os três drivers.
+- **Contas com dígito `"0"` perdiam o dígito**, exibindo `56789` no lugar de
+  `56789-0`, porque a string `"0"` é falsy em PHP e em JavaScript.
 
 ## Próximas fases
 
@@ -78,4 +106,10 @@ PostgreSQL.
 - **Hierarquia de gestor**: `ReembolsoPolicy::view` hoje libera para quem tem
   `reembolsos.ver`. O recorte "só a própria equipe" depende de definir quem é gestor
   de quem, o que o plano ainda não estabelece.
-- **Notificações de vencimento**: fora do escopo inicial.
+- **Notificações de vencimento**: fora do escopo inicial. O sino que aparece na
+  topbar do protótipo foi deliberadamente omitido da implementação enquanto não
+  houver backend por trás dele.
+- **Gestão de usuários**: a permissão `usuarios.gerenciar` existe e é concedida ao
+  Administrador, mas não há controller, rota nem tela. Como o auto-cadastro foi
+  removido, hoje só o seeder cria acesso — nenhuma fase do roadmap acima reserva
+  espaço para isso, e a decisão está pendente (ver Tarefa 37 do plano de telas).
