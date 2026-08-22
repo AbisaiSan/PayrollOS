@@ -1,110 +1,127 @@
 <script setup lang="ts">
-import DangerButton from '@/Components/DangerButton.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import Modal from '@/Components/Modal.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import { ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { nextTick, ref } from 'vue';
+import Dialog from 'primevue/dialog';
+import Password from 'primevue/password';
+import Button from 'primevue/button';
+import Message from 'primevue/message';
+import Aviso from '@/Components/Aviso.vue';
+import Icone from '@/Components/Icone.vue';
 
-const confirmingUserDeletion = ref(false);
-const passwordInput = ref<HTMLInputElement | null>(null);
+const dialogAberto = ref(false);
 
 const form = useForm({
     password: '',
 });
 
-const confirmUserDeletion = () => {
-    confirmingUserDeletion.value = true;
+watch(dialogAberto, (aberto) => {
+    if (aberto) {
+        form.reset();
+        form.clearErrors();
+    }
+});
 
-    nextTick(() => passwordInput.value?.focus());
-};
-
-const deleteUser = () => {
+const excluir = () => {
     form.delete(route('profile.destroy'), {
         preserveScroll: true,
-        onSuccess: () => closeModal(),
-        onError: () => passwordInput.value?.focus(),
-        onFinish: () => {
-            form.reset();
+        onSuccess: () => {
+            dialogAberto.value = false;
         },
     });
-};
-
-const closeModal = () => {
-    confirmingUserDeletion.value = false;
-
-    form.clearErrors();
-    form.reset();
 };
 </script>
 
 <template>
-    <section class="space-y-6">
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Delete Account
-            </h2>
+    <section>
+        <h2 class="text-[14px] font-semibold text-perigo">Excluir conta</h2>
+        <p class="mb-4 mt-1 text-[12px] text-ink-55">
+            Esta ação é permanente. Todos os dados de acesso serão removidos.
+        </p>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Once your account is deleted, all of its resources and data will
-                be permanently deleted. Before deleting your account, please
-                download any data or information that you wish to retain.
-            </p>
-        </header>
+        <!--
+            Lançamentos e reembolsos não somem junto: eles apontam para o registro,
+            e a auditoria guarda quem fez o quê. Dizer isso evita a leitura de que
+            excluir a conta apaga o histórico financeiro.
+        -->
+        <Aviso tom="atencao" icone="alertTriangle" class="mb-4">
+            O que já foi lançado permanece: os pagamentos, reembolsos e a trilha de
+            auditoria continuam registrados. O que se perde é o acesso.
+        </Aviso>
 
-        <DangerButton @click="confirmUserDeletion">Delete Account</DangerButton>
+        <Button
+            label="Excluir minha conta"
+            severity="danger"
+            outlined
+            size="small"
+            @click="dialogAberto = true"
+        >
+            <template #icon><Icone nome="trash" :tamanho="16" /></template>
+        </Button>
 
-        <Modal :show="confirmingUserDeletion" @close="closeModal">
-            <div class="p-6">
-                <h2
-                    class="text-lg font-medium text-gray-900"
-                >
-                    Are you sure you want to delete your account?
-                </h2>
+        <Dialog
+            v-model:visible="dialogAberto"
+            modal
+            :draggable="false"
+            class="w-full max-w-[460px]"
+        >
+            <template #header>
+                <div class="min-w-0">
+                    <h3 class="text-[15.5px] font-semibold">Excluir conta</h3>
+                    <p class="mt-[3px] text-[12.25px] text-ink-55">
+                        Confirme sua senha para continuar
+                    </p>
+                </div>
+            </template>
 
-                <p class="mt-1 text-sm text-gray-600">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Please enter your password to
-                    confirm you would like to permanently delete your account.
+            <form id="form-excluir-conta" class="space-y-3.5" @submit.prevent="excluir">
+                <p class="text-[13px] text-ink-70">
+                    Depois de excluída, a conta não pode ser recuperada. Você sairá do sistema
+                    imediatamente.
                 </p>
 
-                <div class="mt-6">
-                    <InputLabel
-                        for="password"
-                        value="Password"
-                        class="sr-only"
-                    />
-
-                    <TextInput
-                        id="password"
-                        ref="passwordInput"
+                <div class="flex flex-col gap-1.5">
+                    <label for="senha-exclusao" class="text-[12.75px] font-semibold text-ink-90">
+                        Senha <span class="text-laranja-600">●</span>
+                    </label>
+                    <Password
                         v-model="form.password"
-                        type="password"
-                        class="mt-1 block w-3/4"
-                        placeholder="Password"
-                        @keyup.enter="deleteUser"
+                        input-id="senha-exclusao"
+                        :feedback="false"
+                        toggle-mask
+                        fluid
+                        autocomplete="current-password"
+                        :invalid="!!form.errors.password"
                     />
-
-                    <InputError :message="form.errors.password" class="mt-2" />
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeModal">
-                        Cancel
-                    </SecondaryButton>
-
-                    <DangerButton
-                        class="ms-3"
-                        :class="{ 'opacity-25': form.processing }"
-                        :disabled="form.processing"
-                        @click="deleteUser"
+                    <Message
+                        v-if="form.errors.password"
+                        severity="error"
+                        size="small"
+                        variant="simple"
                     >
-                        Delete Account
-                    </DangerButton>
+                        {{ form.errors.password }}
+                    </Message>
                 </div>
-            </div>
-        </Modal>
+            </form>
+
+            <template #footer>
+                <Button
+                    label="Cancelar"
+                    severity="secondary"
+                    outlined
+                    size="small"
+                    :disabled="form.processing"
+                    @click="dialogAberto = false"
+                />
+                <Button
+                    type="submit"
+                    form="form-excluir-conta"
+                    label="Excluir conta"
+                    severity="danger"
+                    size="small"
+                    :loading="form.processing"
+                    :disabled="!form.password"
+                />
+            </template>
+        </Dialog>
     </section>
 </template>

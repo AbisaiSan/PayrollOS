@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
-
-const passwordInput = ref<HTMLInputElement | null>(null);
-const currentPasswordInput = ref<HTMLInputElement | null>(null);
+import Password from 'primevue/password';
+import Button from 'primevue/button';
+import Message from 'primevue/message';
+import Icone from '@/Components/Icone.vue';
 
 const form = useForm({
     current_password: '',
@@ -18,17 +14,14 @@ const form = useForm({
 const updatePassword = () => {
     form.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-        },
+        onSuccess: () => form.reset(),
         onError: () => {
             if (form.errors.password) {
                 form.reset('password', 'password_confirmation');
-                passwordInput.value?.focus();
             }
+
             if (form.errors.current_password) {
                 form.reset('current_password');
-                currentPasswordInput.value?.focus();
             }
         },
     });
@@ -37,73 +30,84 @@ const updatePassword = () => {
 
 <template>
     <section>
-        <header>
-            <h2 class="text-lg font-medium text-gray-900">
-                Update Password
-            </h2>
+        <h2 class="text-[14px] font-semibold">Alterar senha</h2>
+        <p class="mb-4 mt-1 text-[12px] text-ink-55">
+            Use uma senha longa e que você não repita em outro serviço.
+        </p>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay
-                secure.
-            </p>
-        </header>
-
-        <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
-            <div>
-                <InputLabel for="current_password" value="Current Password" />
-
-                <TextInput
-                    id="current_password"
-                    ref="currentPasswordInput"
+        <form class="grid gap-4 sm:grid-cols-2" @submit.prevent="updatePassword">
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
+                <label for="current_password" class="text-[12.75px] font-semibold text-ink-90">
+                    Senha atual <span class="text-laranja-600">●</span>
+                </label>
+                <Password
                     v-model="form.current_password"
-                    type="password"
-                    class="mt-1 block w-full"
+                    input-id="current_password"
+                    :feedback="false"
+                    toggle-mask
+                    fluid
                     autocomplete="current-password"
+                    :invalid="!!form.errors.current_password"
                 />
-
-                <InputError
-                    :message="form.errors.current_password"
-                    class="mt-2"
-                />
+                <Message
+                    v-if="form.errors.current_password"
+                    severity="error"
+                    size="small"
+                    variant="simple"
+                >
+                    {{ form.errors.current_password }}
+                </Message>
             </div>
 
-            <div>
-                <InputLabel for="password" value="New Password" />
-
-                <TextInput
-                    id="password"
-                    ref="passwordInput"
+            <div class="flex flex-col gap-1.5">
+                <label for="password" class="text-[12.75px] font-semibold text-ink-90">
+                    Nova senha <span class="text-laranja-600">●</span>
+                </label>
+                <Password
                     v-model="form.password"
-                    type="password"
-                    class="mt-1 block w-full"
+                    input-id="password"
+                    toggle-mask
+                    fluid
                     autocomplete="new-password"
+                    :invalid="!!form.errors.password"
                 />
-
-                <InputError :message="form.errors.password" class="mt-2" />
+                <Message v-if="form.errors.password" severity="error" size="small" variant="simple">
+                    {{ form.errors.password }}
+                </Message>
             </div>
 
-            <div>
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
+            <div class="flex flex-col gap-1.5">
+                <label for="password_confirmation" class="text-[12.75px] font-semibold text-ink-90">
+                    Confirmar nova senha <span class="text-laranja-600">●</span>
+                </label>
+                <Password
                     v-model="form.password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
+                    input-id="password_confirmation"
+                    :feedback="false"
+                    toggle-mask
+                    fluid
                     autocomplete="new-password"
+                    :invalid="!!form.errors.password_confirmation"
                 />
-
-                <InputError
-                    :message="form.errors.password_confirmation"
-                    class="mt-2"
-                />
+                <Message
+                    v-if="form.errors.password_confirmation"
+                    severity="error"
+                    size="small"
+                    variant="simple"
+                >
+                    {{ form.errors.password_confirmation }}
+                </Message>
             </div>
 
-            <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+            <div class="flex items-center gap-3 sm:col-span-2">
+                <Button
+                    type="submit"
+                    label="Atualizar senha"
+                    size="small"
+                    :loading="form.processing"
+                >
+                    <template #icon><Icone nome="lock" :tamanho="16" /></template>
+                </Button>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -111,11 +115,8 @@ const updatePassword = () => {
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p
-                        v-if="form.recentlySuccessful"
-                        class="text-sm text-gray-600"
-                    >
-                        Saved.
+                    <p v-if="form.recentlySuccessful" class="text-[12.5px] text-sucesso">
+                        Senha atualizada.
                     </p>
                 </Transition>
             </div>

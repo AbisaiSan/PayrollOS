@@ -1,9 +1,10 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
 
 defineProps<{
     mustVerifyEmail?: boolean;
@@ -12,40 +13,28 @@ defineProps<{
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head title="Meu perfil" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Profile
-            </h2>
+            <CabecalhoPagina titulo="Meu perfil" descricao="Dados de acesso e conta" />
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
+        <div class="max-w-[720px] space-y-4">
+            <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
+                <UpdateProfileInformationForm
+                    :must-verify-email="mustVerifyEmail"
+                    :status="status"
+                />
+            </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
+            <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
+                <UpdatePasswordForm />
+            </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
-                    <DeleteUserForm class="max-w-xl" />
-                </div>
+            <!-- Cartão com borda de perigo: a ação daqui não se desfaz. -->
+            <div class="rounded-lg border border-perigo-line bg-white p-5 shadow-card">
+                <DeleteUserForm />
             </div>
         </div>
     </AuthenticatedLayout>
