@@ -27,7 +27,8 @@ class ContratoController extends Controller
             ->when($request->filled('fornecedor_id'), fn ($q) => $q->where('fornecedor_id', $request->integer('fornecedor_id')))
             ->orderBy('descricao')
             ->paginate($request->integer('por_pagina', 20))
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Contrato $contrato) => $this->paraListagem($contrato));
 
         return Inertia::render('Contratos/Index', [
             'contratos' => $contratos,
@@ -35,8 +36,37 @@ class ContratoController extends Controller
             'opcoes' => [
                 'status' => StatusContrato::opcoes(),
                 'tipo' => TipoContrato::opcoes(),
+                // O filtro por fornecedor ja existia na consulta, mas a tela nao
+                // recebia a lista para montar o select. Todos, nao so os ativos:
+                // contrato de fornecedor inativo continua na listagem.
+                'fornecedores' => Fornecedor::query()
+                    ->orderBy('razao_social')
+                    ->get(['id', 'razao_social', 'nome_fantasia']),
             ],
         ]);
+    }
+
+    /**
+     * Recorte da listagem: datas viram AAAA-MM-DD para nao dependerem do fuso do
+     * navegador, e tipo e periodicidade ja saem rotulados.
+     *
+     * @return array<string, mixed>
+     */
+    private function paraListagem(Contrato $contrato): array
+    {
+        return [
+            'id' => $contrato->id,
+            'descricao' => $contrato->descricao,
+            'categoria' => $contrato->categoria?->nome,
+            'fornecedor' => $contrato->fornecedor->nome_exibicao,
+            'tipo' => $contrato->tipo->value,
+            'tipo_rotulo' => $contrato->tipo->rotulo(),
+            'periodicidade_rotulo' => $contrato->periodicidade?->rotulo(),
+            'dia_vencimento' => $contrato->dia_vencimento,
+            'valor' => $contrato->valor,
+            'proximo_vencimento' => $contrato->proximo_vencimento?->toDateString(),
+            'status' => $contrato->status->value,
+        ];
     }
 
     public function create(): Response
