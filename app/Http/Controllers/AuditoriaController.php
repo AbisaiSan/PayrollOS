@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Support\Permissoes;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -44,6 +45,13 @@ class AuditoriaController extends Controller
             'atividades' => $atividades,
             'filtros' => $request->only(['log', 'usuario_id', 'inicio', 'fim']),
             'opcoes' => [
+                // O filtro por usuario ja existia na consulta, mas a tela nao
+                // recebia a lista. So quem de fato aparece na trilha: oferecer
+                // usuarios sem atividade so produziria filtro que devolve nada.
+                'usuarios' => User::query()
+                    ->whereIn('id', Activity::query()->whereNotNull('causer_id')->distinct()->pluck('causer_id'))
+                    ->orderBy('name')
+                    ->get(['id', 'name']),
                 'logs' => [
                     ['value' => 'colaborador', 'label' => 'Colaboradores'],
                     ['value' => 'fornecedor', 'label' => 'Fornecedores'],
