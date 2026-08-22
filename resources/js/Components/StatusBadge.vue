@@ -17,8 +17,9 @@ interface Definicao {
  * verde ainda precisa achar o atraso varrendo a lista.
  *
  * Os status de pagamento entram aqui na Tarefa 1, os de reembolso na Tarefa 9 e
- * os de colaborador na Tarefa 13 e os de fornecedor na Tarefa 19; contrato entra
- * na tarefa 22.
+ * os de colaborador na Tarefa 13 e os de fornecedor na Tarefa 19. O de contrato
+ * era da Tarefa 22, mas entrou junto na 20: o detalhe do fornecedor lista os
+ * contratos dele, e sem o mapa os chips sairiam com o valor cru em minúscula.
  */
 const PAGAMENTO: Record<string, Definicao> = {
     pendente: { rotulo: 'Pendente', severidade: 'atencao', icone: 'clockOutline' },
@@ -50,11 +51,18 @@ const FORNECEDOR: Record<string, Definicao> = {
     inativo: { rotulo: 'Inativo', severidade: 'neutro', icone: 'slashCircle' },
 };
 
+/** Vocabulário de contrato. "Ativo" já vem de COLABORADOR com a mesma leitura. */
+const CONTRATO: Record<string, Definicao> = {
+    suspenso: { rotulo: 'Suspenso', severidade: 'atencao', icone: 'clockOutline' },
+    encerrado: { rotulo: 'Encerrado', severidade: 'neutro', icone: 'slashCircle' },
+};
+
 const DEFINICOES: Record<string, Definicao> = {
     ...PAGAMENTO,
     ...REEMBOLSO,
     ...COLABORADOR,
     ...FORNECEDOR,
+    ...CONTRATO,
 };
 
 const props = withDefaults(
