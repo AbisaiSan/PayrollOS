@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { debounce } from '@/Composables/useDebounce';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
@@ -10,12 +9,16 @@ import Button from 'primevue/button';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import Icone from '@/Components/Icone.vue';
+import { debounce } from '@/Composables/useDebounce';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { Colaborador, Opcao, Paginado } from '@/types';
 
+type LinhaColaborador = Colaborador & { contas_ativas_count: number };
+
 const props = defineProps<{
-    colaboradores: Paginado<Colaborador & { contas_bancarias_count: number }>;
+    colaboradores: Paginado<LinhaColaborador>;
     filtros: Record<string, string | undefined>;
     opcoes: { status: Opcao[]; departamentos: string[] };
 }>();
@@ -27,33 +30,49 @@ const busca = ref(props.filtros.busca ?? '');
 const status = ref(props.filtros.status ?? null);
 const departamento = ref(props.filtros.departamento ?? null);
 
-const aplicarFiltros = () => {
+const TIPO_CONTRATO: Record<string, string> = {
+    clt: 'CLT',
+    pj: 'PJ',
+    estagio: 'Estágio',
+    autonomo: 'Autônomo',
+};
+
+const temFiltro = computed(() => !!(busca.value || status.value || departamento.value));
+
+const consultar = (extras: Record<string, unknown> = {}) => {
     router.get(
         route('colaboradores.index'),
         {
             busca: busca.value || undefined,
             status: status.value || undefined,
             departamento: departamento.value || undefined,
+            ...extras,
         },
-        { preserveState: true, replace: true },
+        { preserveState: true, preserveScroll: true, replace: true },
     );
 };
 
-// Debounce so na busca por texto; os selects aplicam na hora.
-watch(busca, debounce(aplicarFiltros, 350));
-watch([status, departamento], aplicarFiltros);
+// Debounce só na busca por texto; os selects aplicam na hora.
+const consultarComDebounce = debounce(() => consultar(), 350);
+
+watch(busca, () => consultarComDebounce());
+watch([status, departamento], () => consultar());
+
+const limparFiltros = () => {
+    busca.value = '';
+    status.value = null;
+    departamento.value = null;
+};
 
 const mudarPagina = (evento: { page: number; rows: number }) => {
-    router.get(
-        route('colaboradores.index'),
-        {
-            ...props.filtros,
-            page: evento.page + 1,
-            por_pagina: evento.rows,
-        },
-        { preserveState: true, replace: true },
-    );
+    consultar({ page: evento.page + 1, por_pagina: evento.rows });
 };
+
+const abrir = (evento: { data: LinhaColaborador }) => {
+    router.get(route('colaboradores.show', evento.data.id));
+};
+
+const classeLinha = () => 'cursor-pointer';
 </script>
 
 <template>
@@ -63,129 +82,176 @@ const mudarPagina = (evento: { page: number; rows: number }) => {
         <template #header>
             <CabecalhoPagina
                 titulo="Colaboradores"
-                :descricao="`${colaboradores.total} cadastrado(s)`"
+                descricao="Folha de pagamento — cadastro e contas de destino"
             >
                 <template #acoes>
                     <Link
                         v-if="pode('colaboradores.gerenciar')"
                         :href="route('colaboradores.create')"
                     >
-                        <Button label="Novo colaborador" icon="pi pi-plus" size="small" />
+                        <Button label="Novo colaborador" size="small">
+                            <template #icon><Icone nome="plus" :tamanho="16" /></template>
+                        </Button>
                     </Link>
                 </template>
             </CabecalhoPagina>
         </template>
 
-        <div class="space-y-4">
-            <div class="flex flex-wrap gap-3 rounded-xl border border-black/5 bg-white p-4">
+        <!-- Filtros -->
+        <div class="mb-4 flex flex-wrap items-center gap-2.5">
+            <span class="relative min-w-[260px] flex-1 sm:max-w-sm">
+                <Icone
+                    nome="search"
+                    :tamanho="15"
+                    class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-35"
+                />
                 <InputText
                     v-model="busca"
-                    placeholder="Buscar por nome, CPF, cargo ou e-mail"
-                    class="min-w-64 flex-1"
+                    placeholder="Buscar por nome, CPF, cargo ou e-mail…"
+                    class="w-full !pl-9"
                     size="small"
+                    aria-label="Buscar por nome, CPF, cargo ou e-mail"
                 />
-                <Select
-                    v-model="status"
-                    :options="opcoes.status"
-                    option-label="label"
-                    option-value="value"
-                    placeholder="Status"
-                    show-clear
-                    size="small"
-                    class="w-44"
-                />
-                <Select
-                    v-model="departamento"
-                    :options="opcoes.departamentos"
-                    placeholder="Departamento"
-                    show-clear
-                    size="small"
-                    class="w-52"
-                />
-            </div>
+            </span>
 
-            <div class="overflow-hidden rounded-xl border border-black/5 bg-white">
-                <DataTable
-                    :value="colaboradores.data"
-                    data-key="id"
-                    size="small"
-                    lazy
-                    paginator
-                    :rows="colaboradores.per_page"
-                    :total-records="colaboradores.total"
-                    :first="(colaboradores.current_page - 1) * colaboradores.per_page"
-                    :rows-per-page-options="[15, 30, 50]"
-                    @page="mudarPagina"
-                >
-                    <template #empty>
-                        <p class="py-10 text-center text-sm text-corebanx-preto/45">
-                            Nenhum colaborador encontrado.
-                        </p>
+            <Select
+                v-model="status"
+                :options="opcoes.status"
+                option-label="label"
+                option-value="value"
+                placeholder="Status — todos"
+                show-clear
+                size="small"
+                class="w-[168px]"
+                aria-label="Filtrar por status"
+            />
+
+            <Select
+                v-model="departamento"
+                :options="opcoes.departamentos"
+                placeholder="Departamento — todos"
+                show-clear
+                size="small"
+                class="w-[200px]"
+                aria-label="Filtrar por departamento"
+            />
+
+            <button
+                v-if="temFiltro"
+                type="button"
+                class="flex items-center gap-1 px-1 py-1.5 text-[12.5px] font-semibold text-laranja-600 hover:underline"
+                @click="limparFiltros"
+            >
+                <Icone nome="x" :tamanho="13" />
+                Limpar filtros
+            </button>
+        </div>
+
+        <!-- Grid -->
+        <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+            <DataTable
+                :value="colaboradores.data"
+                data-key="id"
+                size="small"
+                lazy
+                paginator
+                :rows="colaboradores.per_page"
+                :total-records="colaboradores.total"
+                :first="(colaboradores.current_page - 1) * colaboradores.per_page"
+                :rows-per-page-options="[15, 30, 50]"
+                :row-class="classeLinha"
+                paginator-template="CurrentPageReport PrevPageLink PageLinks NextPageLink RowsPerPageDropdown"
+                current-page-report-template="Mostrando {first}–{last} de {totalRecords}"
+                @page="mudarPagina"
+                @row-click="abrir"
+            >
+                <template #empty>
+                    <p class="py-12 text-center text-[13px] text-ink-55">
+                        {{
+                            temFiltro
+                                ? 'Nenhum colaborador encontrado com esses filtros.'
+                                : 'Nenhum colaborador cadastrado ainda.'
+                        }}
+                    </p>
+                </template>
+
+                <Column field="nome" header="Nome">
+                    <template #body="{ data }">
+                        <div class="font-semibold text-ink">{{ data.nome }}</div>
+                        <div class="mono mt-0.5 text-[12px] text-ink-55">
+                            {{ formatarDocumento(data.cpf) }}
+                        </div>
                     </template>
+                </Column>
 
-                    <Column field="nome" header="Nome">
-                        <template #body="{ data }">
-                            <Link
-                                :href="route('colaboradores.show', data.id)"
-                                class="font-medium text-corebanx-preto hover:text-corebanx-laranja"
-                            >
-                                {{ data.nome }}
-                            </Link>
-                            <p class="text-xs text-corebanx-preto/50">
-                                {{ formatarDocumento(data.cpf) }}
-                            </p>
-                        </template>
-                    </Column>
+                <Column field="cargo" header="Cargo">
+                    <template #body="{ data }">
+                        {{ data.cargo }}
+                        <div class="mt-0.5 text-[12px] text-ink-55">{{ data.departamento }}</div>
+                    </template>
+                </Column>
 
-                    <Column field="cargo" header="Cargo">
-                        <template #body="{ data }">
-                            {{ data.cargo }}
-                            <p class="text-xs text-corebanx-preto/50">
-                                {{ data.departamento }}
-                            </p>
-                        </template>
-                    </Column>
+                <Column field="tipo_contrato" header="Contrato">
+                    <template #body="{ data }">
+                        {{ TIPO_CONTRATO[data.tipo_contrato] ?? data.tipo_contrato }}
+                    </template>
+                </Column>
 
-                    <Column field="tipo_contrato" header="Contrato" />
+                <Column field="data_admissao" header="Admissão">
+                    <template #body="{ data }">
+                        <span class="mono">{{ formatarData(data.data_admissao) }}</span>
+                    </template>
+                </Column>
 
-                    <Column field="data_admissao" header="Admissão">
-                        <template #body="{ data }">
-                            <span class="tabular-nums">
-                                {{ formatarData(data.data_admissao) }}
-                            </span>
-                        </template>
-                    </Column>
+                <Column
+                    field="salario_base"
+                    header="Salário base"
+                    class="text-right"
+                    header-class="!text-right"
+                >
+                    <template #body="{ data }">
+                        <span class="mono font-semibold">{{
+                            formatarMoeda(data.salario_base)
+                        }}</span>
+                    </template>
+                </Column>
 
-                    <Column field="salario_base" header="Salário base">
-                        <template #body="{ data }">
-                            <span class="tabular-nums">
-                                {{ formatarMoeda(data.salario_base) }}
-                            </span>
-                        </template>
-                    </Column>
+                <!--
+                    Zero contas ativas fica em vermelho: sem destino não há como lançar
+                    folha para essa pessoa, e é o tipo de pendência que passa despercebida
+                    até o dia do pagamento.
+                -->
+                <Column
+                    field="contas_ativas_count"
+                    header="Contas"
+                    class="text-right"
+                    header-class="!text-right"
+                >
+                    <template #body="{ data }">
+                        <span
+                            class="mono inline-block rounded-full px-2 py-0.5 text-[12.25px] font-semibold"
+                            :class="
+                                data.contas_ativas_count === 0
+                                    ? 'bg-perigo-bg text-perigo'
+                                    : 'bg-ink-8 text-ink-70'
+                            "
+                            :title="
+                                data.contas_ativas_count === 0
+                                    ? 'Sem conta ativa — não há destino para a folha'
+                                    : undefined
+                            "
+                        >
+                            {{ data.contas_ativas_count }}
+                        </span>
+                    </template>
+                </Column>
 
-                    <Column field="contas_bancarias_count" header="Contas">
-                        <template #body="{ data }">
-                            <span
-                                class="text-sm"
-                                :class="
-                                    data.contas_bancarias_count === 0
-                                        ? 'text-red-600'
-                                        : 'text-corebanx-preto/60'
-                                "
-                            >
-                                {{ data.contas_bancarias_count }}
-                            </span>
-                        </template>
-                    </Column>
-
-                    <Column field="status" header="Status">
-                        <template #body="{ data }">
-                            <StatusBadge :status="data.status" />
-                        </template>
-                    </Column>
-                </DataTable>
-            </div>
+                <Column field="status" header="Status">
+                    <template #body="{ data }">
+                        <StatusBadge :status="data.status" />
+                    </template>
+                </Column>
+            </DataTable>
         </div>
     </AuthenticatedLayout>
 </template>

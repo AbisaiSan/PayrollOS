@@ -16,9 +16,8 @@ interface Definicao {
  * Cada severidade tem ícone próprio, não só cor: quem não distingue vermelho de
  * verde ainda precisa achar o atraso varrendo a lista.
  *
- * Os status de pagamento entram aqui na Tarefa 1 e os de reembolso na Tarefa 9;
- * os demais vocabulários (colaborador, fornecedor, contrato) entram nas
- * tarefas 13, 19 e 22.
+ * Os status de pagamento entram aqui na Tarefa 1, os de reembolso na Tarefa 9 e
+ * os de colaborador na Tarefa 13; fornecedor e contrato entram nas tarefas 19 e 22.
  */
 const PAGAMENTO: Record<string, Definicao> = {
     pendente: { rotulo: 'Pendente', severidade: 'atencao', icone: 'clockOutline' },
@@ -38,7 +37,14 @@ const REEMBOLSO: Record<string, Definicao> = {
     rejeitado: { rotulo: 'Rejeitado', severidade: 'perigo', icone: 'slashCircle' },
 };
 
-const DEFINICOES: Record<string, Definicao> = { ...PAGAMENTO, ...REEMBOLSO };
+/** Vocabulário de colaborador. */
+const COLABORADOR: Record<string, Definicao> = {
+    ativo: { rotulo: 'Ativo', severidade: 'sucesso', icone: 'checkCircle' },
+    afastado: { rotulo: 'Afastado', severidade: 'atencao', icone: 'clockOutline' },
+    desligado: { rotulo: 'Desligado', severidade: 'neutro', icone: 'slashCircle' },
+};
+
+const DEFINICOES: Record<string, Definicao> = { ...PAGAMENTO, ...REEMBOLSO, ...COLABORADOR };
 
 const props = withDefaults(
     defineProps<{

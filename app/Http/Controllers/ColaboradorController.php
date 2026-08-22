@@ -24,7 +24,10 @@ class ColaboradorController extends Controller
             ->busca($request->string('busca')->toString())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('departamento'), fn ($q) => $q->where('departamento', $request->string('departamento')))
-            ->withCount('contasBancarias')
+            // Contas ativas, nao todas: uma conta inativa nao serve de destino, o
+            // PagamentoService a recusa. Contar todas mostraria "1" tranquilo para
+            // quem, na pratica, nao tem como receber a folha.
+            ->withCount('contasAtivas')
             ->orderBy($request->string('ordenar_por', 'nome')->toString(), $request->string('direcao', 'asc')->toString())
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();
