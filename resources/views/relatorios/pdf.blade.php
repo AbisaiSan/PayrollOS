@@ -40,7 +40,7 @@
 <body>
     <div class="rodape">
         PayrollOS · Corebanx — sistema de controle interno, não executa pagamentos.
-        Gerado em {{ $geradoEm }} por {{ $geradoPor }}.
+        Gerado em {{ $geradoEm }} por {{ $geradoPor }}. Linhas marcadas com * não entram no total.
     </div>
 
     <h1><span class="marca">PayrollOS</span> — Relatório de pagamentos</h1>
@@ -69,6 +69,13 @@
         </tr>
     </table>
 
+    @if ($resumo['naoRealizavel'] > 0)
+        <p class="sub" style="margin: 10px 0 0;">
+            Fora do total: {{ $moeda($resumo['naoRealizavel']) }} em lançamentos cancelados e
+            reembolsos rejeitados. Aparecem na quebra por status e na lista abaixo.
+        </p>
+    @endif
+
     <h2>Por status</h2>
     <table class="grid">
         <thead>
@@ -77,7 +84,7 @@
         <tbody>
             @forelse ($porStatus as $linha)
                 <tr>
-                    <td>{{ $linha['rotulo'] }}</td>
+                    <td>{{ $linha['rotulo'] }}@unless ($linha['realizavel']) *@endunless</td>
                     <td class="num">{{ $linha['quantidade'] }}</td>
                     <td class="num">{{ $moeda($linha['total']) }}</td>
                 </tr>
@@ -106,10 +113,11 @@
     <table class="grid">
         <thead>
             <tr>
+                <th>Origem</th>
                 <th>Descrição</th>
                 <th>Beneficiário</th>
                 <th>Categoria</th>
-                <th>Vencimento</th>
+                <th>Data</th>
                 <th>Status</th>
                 <th class="num">Valor</th>
             </tr>
@@ -117,15 +125,16 @@
         <tbody>
             @forelse ($lancamentos as $linha)
                 <tr>
+                    <td>{{ $linha['origem'] }}</td>
                     <td>{{ $linha['descricao'] }}</td>
                     <td>{{ $linha['beneficiario'] }}</td>
                     <td>{{ $linha['categoria'] }}</td>
-                    <td class="num">{{ $linha['data_vencimento'] }}</td>
+                    <td class="num">{{ $linha['data'] }}</td>
                     <td>{{ $linha['status'] }}</td>
                     <td class="num">{{ $moeda($linha['valor']) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6">Nenhum lançamento no período escolhido.</td></tr>
+                <tr><td colspan="7">Nenhum lançamento no período escolhido.</td></tr>
             @endforelse
         </tbody>
     </table>

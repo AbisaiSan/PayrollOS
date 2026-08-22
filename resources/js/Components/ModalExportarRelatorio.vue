@@ -129,8 +129,8 @@ const fechar = () => emit('update:visivel', false);
 
             <Aviso>
                 O arquivo carrega os agregados que estão na tela e também a lista dos
-                lançamentos que os sustentam, com o período e os filtros escritos no
-                cabeçalho.
+                lançamentos que os sustentam — pagamentos e reembolsos —, com o período e os
+                filtros escritos no cabeçalho.
             </Aviso>
         </div>
 

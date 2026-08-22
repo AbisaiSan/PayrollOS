@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\StatusPagamento;
 use App\Exports\RelatorioPagamentosExport;
 use App\Models\CategoriaPagamento;
 use App\Services\RelatorioService;
@@ -17,7 +16,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Fase 6 do plano. A consolidacao junta folha, fornecedores e reembolsos.
+ * Fase 6 do plano. A consolidacao junta folha, fornecedores e reembolsos, como
+ * manda a regra 3.7 — o que a tarefa 2 do backend passou a cumprir de fato.
  *
  * Tela e arquivo exportado saem do mesmo RelatorioService de proposito: o modal
  * de exportacao promete manter os filtros aplicados na tela, e duas consultas
@@ -40,7 +40,7 @@ class RelatorioController extends Controller
             'porCategoria' => $this->service->porCategoria($filtros),
             'opcoes' => [
                 'categorias' => CategoriaPagamento::ativas()->orderBy('nome')->get(['id', 'nome']),
-                'status' => StatusPagamento::opcoes(),
+                'status' => $this->service->opcoesDeStatus(),
             ],
         ]);
     }
@@ -92,7 +92,8 @@ class RelatorioController extends Controller
             : null;
 
         $status = $filtros['status']
-            ? StatusPagamento::tryFrom($filtros['status'])?->rotulo()
+            ? collect($this->service->opcoesDeStatus())
+                ->firstWhere('value', $filtros['status'])['label'] ?? null
             : null;
 
         return [

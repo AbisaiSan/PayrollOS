@@ -18,6 +18,7 @@
     <tr><td>Total no período</td><td>{{ $resumo['total'] }}</td></tr>
     <tr><td>Lançamentos</td><td>{{ $resumo['quantidade'] }}</td></tr>
     <tr><td>Ticket médio</td><td>{{ $ticketMedio }}</td></tr>
+    <tr><td>Fora do total (cancelado/rejeitado)</td><td>{{ $resumo['naoRealizavel'] }}</td></tr>
     <tr></tr>
 
     <tr><td><strong>Por status</strong></td></tr>
@@ -43,13 +44,14 @@
 
     <tr><td><strong>Lançamentos</strong></td></tr>
     <tr>
+        <td>Origem</td>
         <td>ID</td>
         <td>Descrição</td>
         <td>Beneficiário</td>
         <td>Tipo</td>
         <td>Categoria</td>
         <td>Competência</td>
-        <td>Vencimento</td>
+        <td>Data</td>
         <td>Pagamento</td>
         <td>Forma</td>
         <td>Status</td>
@@ -57,19 +59,20 @@
     </tr>
     @forelse ($lancamentos as $linha)
         <tr>
+            <td>{{ $linha['origem'] }}</td>
             <td>{{ $linha['id'] }}</td>
             <td>{{ $linha['descricao'] }}</td>
             <td>{{ $linha['beneficiario'] }}</td>
             <td>{{ $linha['beneficiario_tipo'] }}</td>
             <td>{{ $linha['categoria'] }}</td>
             <td>{{ $linha['competencia'] ?? '' }}</td>
-            <td>{{ $linha['data_vencimento'] }}</td>
+            <td>{{ $linha['data'] }}</td>
             <td>{{ $linha['data_pagamento'] ?? '' }}</td>
             <td>{{ $linha['forma_pagamento'] }}</td>
             <td>{{ $linha['status'] }}</td>
             <td>{{ $linha['valor'] }}</td>
         </tr>
     @empty
-        <tr><td colspan="11">Nenhum lançamento no período escolhido.</td></tr>
+        <tr><td colspan="12">Nenhum lançamento no período escolhido.</td></tr>
     @endforelse
 </table>

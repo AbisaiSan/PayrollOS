@@ -11,6 +11,7 @@ import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import CardIndicador from '@/Components/CardIndicador.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import Aviso from '@/Components/Aviso.vue';
 import ModalExportarRelatorio from '@/Components/ModalExportarRelatorio.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -21,6 +22,8 @@ interface LinhaStatus {
     rotulo: string;
     total: number;
     quantidade: number;
+    /** Falso em cancelado e rejeitado: aparecem na quebra, ficam fora do total. */
+    realizavel: boolean;
 }
 
 interface LinhaCategoria {
@@ -35,7 +38,7 @@ const props = defineProps<{
         categoria_id: number | null;
         status: string | null;
     };
-    resumo: { total: number; quantidade: number };
+    resumo: { total: number; quantidade: number; naoRealizavel: number };
     porStatus: LinhaStatus[];
     porCategoria: LinhaCategoria[];
     opcoes: { categorias: Array<{ id: number; nome: string }>; status: Opcao[] };
@@ -198,12 +201,22 @@ const resumoFiltros = computed(() => ({
             </span>
         </p>
 
+        <!--
+            O total exclui cancelado e rejeitado — dinheiro que não vai sair. Dizer
+            quanto ficou de fora evita a leitura de que a diferença é erro de conta.
+        -->
+        <Aviso v-if="resumo.naoRealizavel > 0" class="mb-4">
+            <strong>{{ formatarMoeda(resumo.naoRealizavel) }}</strong> em lançamentos
+            cancelados e reembolsos rejeitados estão fora do total. Eles continuam na quebra
+            por status abaixo, marcados como fora do total.
+        </Aviso>
+
         <!-- Indicadores -->
         <div class="mb-5 grid gap-3.5 sm:grid-cols-2">
             <CardIndicador
                 rotulo="Total no período"
                 :valor="formatarMoeda(resumo.total)"
-                :detalhe="`${resumo.quantidade} lançamento${resumo.quantidade === 1 ? '' : 's'}`"
+                :detalhe="`${resumo.quantidade} lançamento${resumo.quantidade === 1 ? '' : 's'}, pagamentos e reembolsos`"
                 icone="wallet"
             />
             <CardIndicador
@@ -232,7 +245,12 @@ const resumoFiltros = computed(() => ({
 
                     <Column field="status" header="Status">
                         <template #body="{ data }">
-                            <StatusBadge :status="data.status" :rotulo="data.rotulo" />
+                            <div class="flex items-center gap-2">
+                                <StatusBadge :status="data.status" :rotulo="data.rotulo" />
+                                <span v-if="!data.realizavel" class="text-[11.5px] text-ink-55">
+                                    fora do total
+                                </span>
+                            </div>
                         </template>
                     </Column>
 
