@@ -111,7 +111,7 @@ class ContratoController extends Controller
 
         return Inertia::render('Contratos/Form', [
             'contrato' => $contrato,
-            'opcoes' => $this->opcoesFormulario(),
+            'opcoes' => $this->opcoesFormulario($contrato),
         ]);
     }
 
@@ -140,12 +140,24 @@ class ContratoController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function opcoesFormulario(): array
+    private function opcoesFormulario(?Contrato $contrato = null): array
     {
+        $fornecedores = Fornecedor::ativos()
+            ->orderBy('razao_social')
+            ->get(['id', 'razao_social', 'nome_fantasia']);
+
+        // Ao editar, o fornecedor do contrato entra na lista mesmo se ja tiver
+        // sido inativado. Sem isso o campo abre em branco e parece que ninguem
+        // esta escolhido, embora o vinculo continue intacto.
+        if ($contrato && ! $fornecedores->contains('id', $contrato->fornecedor_id)) {
+            $fornecedores = $fornecedores
+                ->push($contrato->fornecedor()->first(['id', 'razao_social', 'nome_fantasia']))
+                ->sortBy('razao_social')
+                ->values();
+        }
+
         return [
-            'fornecedores' => Fornecedor::ativos()
-                ->orderBy('razao_social')
-                ->get(['id', 'razao_social', 'nome_fantasia']),
+            'fornecedores' => $fornecedores,
             'categorias' => CategoriaPagamento::ativas()->orderBy('nome')->get(['id', 'nome']),
             'tipo' => TipoContrato::opcoes(),
             'periodicidade' => Periodicidade::opcoes(),
