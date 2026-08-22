@@ -83,6 +83,35 @@ export function useFormato() {
             && digitoEsperado(10) === Number(digitos[10]);
     };
 
+    /**
+     * Digito verificador do CNPJ, espelhando App\Support\Documento::cnpjValido.
+     * Mesma razao do cpfValido: avisar antes de ir ao servidor.
+     */
+    const cnpjValido = (documento: string | null | undefined) => {
+        const digitos = (documento ?? '').replace(/\D/g, '');
+
+        if (digitos.length !== 14) return false;
+
+        if (/^(\d){13}$/.test(digitos)) return false;
+
+        const digitoDe = (base: string) => {
+            let peso = base.length - 7;
+            let soma = 0;
+
+            for (const numero of base) {
+                soma += Number(numero) * peso;
+                peso = peso === 2 ? 9 : peso - 1;
+            }
+
+            const resto = soma % 11;
+
+            return resto < 2 ? 0 : 11 - resto;
+        };
+
+        return digitoDe(digitos.slice(0, 12)) === Number(digitos[12])
+            && digitoDe(digitos.slice(0, 13)) === Number(digitos[13]);
+    };
+
     /** Dias ate o vencimento; negativo quando ja venceu. */
     const diasAte = (data: string | null | undefined) =>
         data ? dayjs(data).startOf('day').diff(dayjs().startOf('day'), 'day') : null;
@@ -135,6 +164,7 @@ export function useFormato() {
         formatarCompetencia,
         formatarDocumento,
         cpfValido,
+        cnpjValido,
         diasAte,
         vencimentoRelativo,
         resumoConta,
