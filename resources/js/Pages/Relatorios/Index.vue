@@ -11,6 +11,7 @@ import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import CardIndicador from '@/Components/CardIndicador.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import ModalExportarRelatorio from '@/Components/ModalExportarRelatorio.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { Opcao } from '@/types';
@@ -90,6 +91,15 @@ const maiorCategoria = computed(() =>
 
 const proporcao = (total: number) =>
     maiorCategoria.value > 0 ? Math.round((total / maiorCategoria.value) * 100) : 0;
+
+const modalExportar = ref(false);
+
+/** Rótulos do recorte atual, para o modal dizer o que sairia no arquivo. */
+const resumoFiltros = computed(() => ({
+    categoria:
+        props.opcoes.categorias.find((c) => c.id === props.filtros.categoria_id)?.nome ?? null,
+    status: props.opcoes.status.find((s) => s.value === props.filtros.status)?.label ?? null,
+}));
 </script>
 
 <template>
@@ -108,8 +118,7 @@ const proporcao = (total: number) =>
                         severity="secondary"
                         outlined
                         size="small"
-                        disabled
-                        title="O modal de exportação entra na próxima etapa (tarefa 28)"
+                        @click="modalExportar = true"
                     >
                         <template #icon><Icone nome="download" :tamanho="16" /></template>
                     </Button>
@@ -277,5 +286,12 @@ const proporcao = (total: number) =>
                 </div>
             </div>
         </div>
+
+        <ModalExportarRelatorio
+            v-model:visivel="modalExportar"
+            :filtros="filtros"
+            :resumo-filtros="resumoFiltros"
+            :quantidade="resumo.quantidade"
+        />
     </AuthenticatedLayout>
 </template>
