@@ -29,14 +29,16 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         /*
-         * Telas proprias para 403 (tarefa 38).
+         * Telas proprias para 403 e 404 (tarefas 38 e 39).
          *
          * Sem isto o usuario cai na pagina crua do Laravel, fora da casca da
-         * aplicacao e sem caminho de volta. So 403 e interceptado: 500 continua
-         * mostrando o erro real, que e o que o desenvolvedor precisa ver.
+         * aplicacao e sem caminho de volta. So estes dois sao interceptados: 500
+         * continua mostrando o erro real, que e o que o desenvolvedor precisa ver.
          */
         $exceptions->respond(function (SymfonyResponse $resposta, Throwable $excecao, Request $request) {
-            if ($resposta->getStatusCode() !== 403 || $request->expectsJson()) {
+            $status = $resposta->getStatusCode();
+
+            if (! in_array($status, [403, 404], true) || $request->expectsJson()) {
                 return $resposta;
             }
 
@@ -46,8 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return $resposta;
             }
 
-            return Inertia::render('Erros/403')
+            return Inertia::render("Erros/{$status}")
                 ->toResponse($request)
-                ->setStatusCode(403);
+                ->setStatusCode($status);
         });
     })->create();
