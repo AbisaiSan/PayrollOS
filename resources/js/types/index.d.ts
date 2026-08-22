@@ -86,6 +86,7 @@ export interface CategoriaPagamento {
     id: number;
     nome: string;
     tipo: string;
+    descricao?: string | null;
     ativo: boolean;
 }
 
