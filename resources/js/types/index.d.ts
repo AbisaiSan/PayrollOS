@@ -36,6 +36,7 @@ export type StatusReembolso = 'pendente' | 'aprovado' | 'pago' | 'rejeitado';
 export interface ContaBancaria {
     id: number;
     banco: string;
+    codigo_banco: string | null;
     agencia: string;
     conta: string;
     digito: string | null;
