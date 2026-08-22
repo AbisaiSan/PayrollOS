@@ -16,8 +16,9 @@ interface Definicao {
  * Cada severidade tem ícone próprio, não só cor: quem não distingue vermelho de
  * verde ainda precisa achar o atraso varrendo a lista.
  *
- * Os status de pagamento entram aqui na Tarefa 1; os demais vocabulários
- * (reembolso, colaborador, fornecedor, contrato) entram nas tarefas 9, 13, 19 e 22.
+ * Os status de pagamento entram aqui na Tarefa 1 e os de reembolso na Tarefa 9;
+ * os demais vocabulários (colaborador, fornecedor, contrato) entram nas
+ * tarefas 13, 19 e 22.
  */
 const PAGAMENTO: Record<string, Definicao> = {
     pendente: { rotulo: 'Pendente', severidade: 'atencao', icone: 'clockOutline' },
@@ -26,6 +27,18 @@ const PAGAMENTO: Record<string, Definicao> = {
     atrasado: { rotulo: 'Atrasado', severidade: 'perigo', icone: 'alertTriangle' },
     cancelado: { rotulo: 'Cancelado', severidade: 'neutro', icone: 'slashCircle' },
 };
+
+/**
+ * Vocabulário de reembolso. "Pendente" e "Pago" já vêm de PAGAMENTO com o mesmo
+ * rótulo, severidade e ícone, então só o que é próprio do fluxo de aprovação é
+ * declarado aqui.
+ */
+const REEMBOLSO: Record<string, Definicao> = {
+    aprovado: { rotulo: 'Aprovado', severidade: 'info', icone: 'checkCircle' },
+    rejeitado: { rotulo: 'Rejeitado', severidade: 'perigo', icone: 'slashCircle' },
+};
+
+const DEFINICOES: Record<string, Definicao> = { ...PAGAMENTO, ...REEMBOLSO };
 
 const props = withDefaults(
     defineProps<{
@@ -44,7 +57,7 @@ const props = withDefaults(
  */
 const definicao = computed<Definicao>(
     () =>
-        PAGAMENTO[props.status] ?? {
+        DEFINICOES[props.status] ?? {
             rotulo: props.status,
             severidade: 'neutro',
             icone: 'info',

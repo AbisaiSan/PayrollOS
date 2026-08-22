@@ -34,7 +34,8 @@ class ReembolsoController extends Controller
             ->noPeriodo($request->string('inicio')->toString() ?: null, $request->string('fim')->toString() ?: null)
             ->latest('data_solicitacao')
             ->paginate($request->integer('por_pagina', 20))
-            ->withQueryString();
+            ->withQueryString()
+            ->through(fn (Reembolso $reembolso) => $this->paraListagem($reembolso));
 
         return Inertia::render('Reembolsos/Index', [
             'reembolsos' => $reembolsos,
@@ -42,6 +43,11 @@ class ReembolsoController extends Controller
             'opcoes' => [
                 'status' => StatusReembolso::opcoes(),
                 'categorias' => CategoriaReembolso::opcoes(),
+                // Todos, nao so os ativos: reembolso de quem ja foi desligado
+                // continua na listagem e precisa ser filtravel.
+                'colaboradores' => Colaborador::query()
+                    ->orderBy('nome')
+                    ->get(['id', 'nome', 'departamento']),
             ],
         ]);
     }
@@ -163,6 +169,27 @@ class ReembolsoController extends Controller
         return redirect()
             ->route('reembolsos.index')
             ->with('sucesso', 'Reembolso removido.');
+    }
+
+    /**
+     * Recorte da listagem: datas viram AAAA-MM-DD para nao dependerem do fuso do
+     * navegador, e a categoria ja sai rotulada. O model inteiro traria
+     * observacoes e chaves estrangeiras que a grid nao usa.
+     *
+     * @return array<string, mixed>
+     */
+    private function paraListagem(Reembolso $reembolso): array
+    {
+        return [
+            'id' => $reembolso->id,
+            'descricao' => $reembolso->descricao,
+            'colaborador_nome' => $reembolso->colaborador->nome,
+            'colaborador_departamento' => $reembolso->colaborador->departamento,
+            'categoria' => $reembolso->categoria->rotulo(),
+            'valor' => $reembolso->valor,
+            'data_solicitacao' => $reembolso->data_solicitacao->toDateString(),
+            'status' => $reembolso->status->value,
+        ];
     }
 
     /**
