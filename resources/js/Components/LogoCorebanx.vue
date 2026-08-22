@@ -1,5 +1,12 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ compacto?: boolean }>(), { compacto: false });
+/**
+ * `tom` existe porque a marca aparece sobre o azul da sidebar e sobre o branco
+ * do cartão de autenticação — em branco no segundo caso, o texto sumiria.
+ */
+withDefaults(defineProps<{ compacto?: boolean; tom?: 'claro' | 'escuro' }>(), {
+    compacto: false,
+    tom: 'claro',
+});
 </script>
 
 <template>
@@ -21,11 +28,15 @@ withDefaults(defineProps<{ compacto?: boolean }>(), { compacto: false });
         </svg>
 
         <div v-if="!compacto" class="leading-none">
-            <span class="block text-[16.5px] font-bold tracking-[0.01em] text-white">
+            <span
+                class="block text-[16.5px] font-bold tracking-[0.01em]"
+                :class="tom === 'escuro' ? 'text-ink' : 'text-white'"
+            >
                 PayrollOS
             </span>
             <span
-                class="mt-px block text-[10.5px] font-normal uppercase tracking-[0.04em] text-white/60"
+                class="mt-px block text-[10.5px] font-normal uppercase tracking-[0.04em]"
+                :class="tom === 'escuro' ? 'text-ink-55' : 'text-white/60'"
             >
                 Corebanx
             </span>
