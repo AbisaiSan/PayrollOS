@@ -62,6 +62,7 @@ export interface Colaborador {
     email: string | null;
     telefone: string | null;
     status: 'ativo' | 'afastado' | 'desligado';
+    observacoes?: string | null;
     contas_bancarias?: ContaBancaria[];
 }
 

@@ -51,6 +51,38 @@ export function useFormato() {
         return documento;
     };
 
+    /**
+     * Digito verificador do CPF, espelhando App\Support\Documento::cpfValido.
+     *
+     * Existe no frontend para o formulario avisar antes de ir ao servidor: um CPF
+     * errado costuma ser digitacao, e mandar a pagina inteira de volta so para
+     * dizer isso e um round-trip desperdicado. A regra Cpf continua sendo a
+     * autoridade — esta aqui e conveniencia, nao substituicao.
+     */
+    const cpfValido = (documento: string | null | undefined) => {
+        const digitos = (documento ?? '').replace(/\D/g, '');
+
+        if (digitos.length !== 11) return false;
+
+        // 000.000.000-00, 111.111.111-11 etc. passam no calculo, mas nao existem.
+        if (/^(\d){10}$/.test(digitos)) return false;
+
+        const digitoEsperado = (ateOndeContar: number) => {
+            let soma = 0;
+
+            for (let i = 0; i < ateOndeContar; i++) {
+                soma += Number(digitos[i]) * (ateOndeContar + 1 - i);
+            }
+
+            const resto = (soma * 10) % 11;
+
+            return resto === 10 ? 0 : resto;
+        };
+
+        return digitoEsperado(9) === Number(digitos[9])
+            && digitoEsperado(10) === Number(digitos[10]);
+    };
+
     /** Dias ate o vencimento; negativo quando ja venceu. */
     const diasAte = (data: string | null | undefined) =>
         data ? dayjs(data).startOf('day').diff(dayjs().startOf('day'), 'day') : null;
@@ -102,6 +134,7 @@ export function useFormato() {
         formatarDataHora,
         formatarCompetencia,
         formatarDocumento,
+        cpfValido,
         diasAte,
         vencimentoRelativo,
         resumoConta,
