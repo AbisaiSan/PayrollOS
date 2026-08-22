@@ -108,7 +108,7 @@ class ReembolsoController extends Controller
 
         return Inertia::render('Reembolsos/Form', [
             'reembolso' => $reembolso,
-            'opcoes' => $this->opcoesFormulario(),
+            'opcoes' => $this->opcoesFormulario($reembolso),
         ]);
     }
 
@@ -195,13 +195,25 @@ class ReembolsoController extends Controller
     /**
      * @return array<string, mixed>
      */
-    private function opcoesFormulario(): array
+    private function opcoesFormulario(?Reembolso $reembolso = null): array
     {
+        $colaboradores = Colaborador::ativos()
+            ->orderBy('nome')
+            ->get(['id', 'nome', 'departamento']);
+
+        // Ao editar, o titular da solicitacao entra na lista mesmo se ja tiver
+        // sido desligado. Sem isso o campo abre em branco e parece que ninguem
+        // esta escolhido, embora o vinculo continue intacto no banco.
+        if ($reembolso && ! $colaboradores->contains('id', $reembolso->colaborador_id)) {
+            $colaboradores = $colaboradores
+                ->push($reembolso->colaborador()->first(['id', 'nome', 'departamento']))
+                ->sortBy('nome')
+                ->values();
+        }
+
         return [
             'categorias' => CategoriaReembolso::opcoes(),
-            'colaboradores' => Colaborador::ativos()
-                ->orderBy('nome')
-                ->get(['id', 'nome', 'departamento']),
+            'colaboradores' => $colaboradores,
         ];
     }
 }
