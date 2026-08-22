@@ -32,16 +32,6 @@ class CategoriaPagamentoController extends Controller
         ]);
     }
 
-    public function create(): Response
-    {
-        $this->authorize('create', CategoriaPagamento::class);
-
-        return Inertia::render('Categorias/Form', [
-            'categoria' => null,
-            'opcoes' => ['tipo' => TipoCategoria::opcoes()],
-        ]);
-    }
-
     public function store(CategoriaPagamentoRequest $request): RedirectResponse
     {
         $this->authorize('create', CategoriaPagamento::class);
@@ -51,16 +41,6 @@ class CategoriaPagamentoController extends Controller
         return redirect()
             ->route('categorias.index')
             ->with('sucesso', 'Categoria criada.');
-    }
-
-    public function edit(CategoriaPagamento $categoria): Response
-    {
-        $this->authorize('update', $categoria);
-
-        return Inertia::render('Categorias/Form', [
-            'categoria' => $categoria,
-            'opcoes' => ['tipo' => TipoCategoria::opcoes()],
-        ]);
     }
 
     public function update(CategoriaPagamentoRequest $request, CategoriaPagamento $categoria): RedirectResponse

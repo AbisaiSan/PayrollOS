@@ -84,9 +84,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     | Categorias e pagamentos (Fase 3, modulo central)
     |--------------------------------------------------------------------------
     */
+    // Sem create/edit: a categoria e criada e editada num Dialog na propria
+    // listagem, entao as paginas de formulario nao existem (tarefa 26).
     Route::resource('categorias', CategoriaPagamentoController::class)
         ->parameters(['categorias' => 'categoria'])
-        ->except(['show']);
+        ->except(['show', 'create', 'edit']);
 
     Route::resource('pagamentos', PagamentoController::class);
 

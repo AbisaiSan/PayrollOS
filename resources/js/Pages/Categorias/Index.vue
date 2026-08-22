@@ -9,6 +9,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import ModalCategoria from '@/Components/ModalCategoria.vue';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { CategoriaPagamento, Opcao } from '@/types';
 
@@ -28,6 +29,14 @@ const tipo = ref(props.filtros.tipo ?? null);
 const ROTULO_TIPO = computed(() =>
     Object.fromEntries(props.opcoes.tipo.map((opcao) => [opcao.value, opcao.label])),
 );
+
+const dialogAberto = ref(false);
+const categoriaEmEdicao = ref<LinhaCategoria | null>(null);
+
+const abrirDialog = (categoria: LinhaCategoria | null = null) => {
+    categoriaEmEdicao.value = categoria;
+    dialogAberto.value = true;
+};
 
 watch(tipo, () => {
     router.get(
@@ -52,8 +61,7 @@ watch(tipo, () => {
                         v-if="pode('categorias.gerenciar')"
                         label="Nova categoria"
                         size="small"
-                        disabled
-                        title="O modal de categoria entra na próxima etapa (tarefa 26)"
+                        @click="abrirDialog()"
                     >
                         <template #icon><Icone nome="plus" :tamanho="16" /></template>
                     </Button>
@@ -134,13 +142,13 @@ watch(tipo, () => {
                     header-class="!text-right"
                     style="width: 1%"
                 >
-                    <template #body>
+                    <template #body="{ data }">
                         <button
                             type="button"
-                            class="cursor-not-allowed rounded-lg p-2 text-ink-35"
-                            disabled
-                            title="O modal de categoria entra na próxima etapa (tarefa 26)"
+                            class="rounded-lg p-2 text-ink-70 hover:bg-ink-8"
+                            :title="`Editar ${data.nome}`"
                             aria-label="Editar categoria"
+                            @click="abrirDialog(data)"
                         >
                             <Icone nome="edit" :tamanho="15" />
                         </button>
@@ -153,5 +161,11 @@ watch(tipo, () => {
             Categoria em uso não é excluída — desativá-la a tira dos formulários sem mexer nos
             pagamentos já classificados com ela.
         </p>
+
+        <ModalCategoria
+            v-model:visivel="dialogAberto"
+            :categoria="categoriaEmEdicao"
+            :opcoes="opcoes"
+        />
     </AuthenticatedLayout>
 </template>
