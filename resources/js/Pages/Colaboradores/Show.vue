@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -8,6 +8,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import ContasBancarias from '@/Components/ContasBancarias.vue';
+import ModalDesligarColaborador from '@/Components/ModalDesligarColaborador.vue';
 import Aviso from '@/Components/Aviso.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
@@ -70,6 +71,8 @@ const abrirPagamento = (evento: { data: LinhaPagamento }) => {
 };
 
 const classeLinha = () => (podeVerPagamentos.value ? 'cursor-pointer' : '');
+
+const modalDesligar = ref(false);
 </script>
 
 <template>
@@ -164,8 +167,7 @@ const classeLinha = () => (podeVerPagamentos.value ? 'cursor-pointer' : '');
                             text
                             size="small"
                             class="ml-auto"
-                            disabled
-                            title="O modal de desligamento, com a data e as observações, entra na próxima etapa (tarefa 16)"
+                            @click="modalDesligar = true"
                         >
                             <template #icon><Icone nome="slashCircle" :tamanho="16" /></template>
                         </Button>
@@ -243,5 +245,11 @@ const classeLinha = () => (podeVerPagamentos.value ? 'cursor-pointer' : '');
                 :opcoes="opcoes"
             />
         </div>
+
+        <ModalDesligarColaborador
+            v-if="!estaDesligado"
+            v-model:visivel="modalDesligar"
+            :colaborador="colaborador"
+        />
     </AuthenticatedLayout>
 </template>
