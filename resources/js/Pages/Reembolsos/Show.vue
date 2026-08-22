@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import { useConfirm } from 'primevue/useconfirm';
@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import HistoricoStatusTimeline from '@/Components/HistoricoStatusTimeline.vue';
+import ModalRejeitarReembolso from '@/Components/ModalRejeitarReembolso.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -169,6 +170,8 @@ const desfazerPagamento = () =>
     });
 
 const estaPago = computed(() => props.reembolso.status === 'pago');
+
+const modalRejeitar = ref(false);
 </script>
 
 <template>
@@ -262,8 +265,7 @@ const estaPago = computed(() => props.reembolso.status === 'pago');
                             severity="secondary"
                             outlined
                             size="small"
-                            disabled
-                            title="O modal de rejeição, com o motivo obrigatório, entra na próxima etapa (tarefa 12)"
+                            @click="modalRejeitar = true"
                         >
                             <template #icon><Icone nome="x" :tamanho="16" /></template>
                         </Button>
@@ -401,5 +403,7 @@ const estaPago = computed(() => props.reembolso.status === 'pago');
                 <HistoricoStatusTimeline :eventos="reembolso.historico_status ?? []" />
             </div>
         </div>
+
+        <ModalRejeitarReembolso v-model:visivel="modalRejeitar" :reembolso="reembolso" />
     </AuthenticatedLayout>
 </template>

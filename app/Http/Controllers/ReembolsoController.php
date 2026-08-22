@@ -12,6 +12,7 @@ use App\Services\ReembolsoService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -134,8 +135,20 @@ class ReembolsoController extends Controller
     {
         $dados = $request->validate([
             'status' => ['required', 'string'],
-            'observacao' => ['nullable', 'string', 'max:1000'],
+            'observacao' => [
+                // Rejeitar sem dizer por que deixa o solicitante sem saber o que
+                // corrigir. Exigido aqui, e nao so na tela, porque a regra e do
+                // fluxo e nao da interface.
+                Rule::requiredIf(
+                    fn () => $request->string('status')->toString() === StatusReembolso::Rejeitado->value
+                ),
+                'nullable',
+                'string',
+                'max:1000',
+            ],
             'data_pagamento' => ['nullable', 'date'],
+        ], [
+            'observacao.required' => 'Informe o motivo da rejeição.',
         ]);
 
         $novoStatus = StatusReembolso::from($dados['status']);
