@@ -13,6 +13,7 @@ use App\Http\Controllers\PagamentoController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReembolsoController;
 use App\Http\Controllers\RelatorioController;
+use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 
 // Sistema interno: nao ha area publica, a raiz vai direto para o login.
@@ -61,6 +62,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('{conta}/inativar', [ContaBancariaController::class, 'inativar'])->name('inativar');
             Route::post('{conta}/reativar', [ContaBancariaController::class, 'reativar'])->name('reativar');
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Usuarios (contas de acesso)
+    |--------------------------------------------------------------------------
+    |
+    | Sem show: o detalhe de uma conta e a propria linha da listagem. Sem destroy:
+    | a conta e desativada, nunca excluida, para a trilha de auditoria nao ficar
+    | apontando para um usuario que sumiu.
+    |
+    */
+    Route::resource('usuarios', UsuarioController::class)
+        ->parameters(['usuarios' => 'usuario'])
+        ->except(['show', 'destroy']);
+
+    Route::post('usuarios/{usuario}/ativo', [UsuarioController::class, 'alternarAtivo'])
+        ->name('usuarios.ativo');
 
     /*
     |--------------------------------------------------------------------------

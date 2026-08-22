@@ -96,6 +96,7 @@ os modais de confirmação e de mudança de status.
 | 6 | Visualização de relatórios e exportação Excel/PDF | Agregados prontos; exportação pendente |
 | 7 | Ajuste fino dos perfis | Policies prontas, falta revisar caso a caso |
 | 8 | Testes ponta a ponta, revisão de UX, deploy | — |
+| 9 | Gestão de contas de acesso (usuários) | Pronto — construído na Tarefa 37 do redesign |
 
 ## Pontos que ficaram em aberto no plano
 
@@ -106,6 +107,14 @@ os modais de confirmação e de mudança de status.
 - **Hierarquia de gestor**: `ReembolsoPolicy::view` hoje libera para quem tem
   `reembolsos.ver`. O recorte "só a própria equipe" depende de definir quem é gestor
   de quem, o que o plano ainda não estabelece.
+- **`Gate::before` do Administrador** (`AppServiceProvider.php:46`) concede tudo antes
+  de qualquer policy rodar, o que anula guardas finas escritas nelas. Dois casos já
+  apareceram: `CategoriaPagamentoPolicy::delete` (categoria em uso deveria ser
+  bloqueada, mas o administrador chega ao banco e recebe erro 500 de chave
+  estrangeira) e `UserPolicy::alternarAtivo` (o administrador conseguia desativar a
+  própria conta). O segundo foi contornado com uma checagem explícita no controller;
+  o primeiro continua aberto. Vale decidir se o `Gate::before` passa a respeitar uma
+  lista de habilidades, em vez de contorná-las por inteiro.
 - **Notificações de vencimento**: fora do escopo inicial. O sino que aparece na
   topbar do protótipo foi deliberadamente omitido da implementação enquanto não
   houver backend por trás dele.

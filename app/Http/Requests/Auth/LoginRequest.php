@@ -42,7 +42,11 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // 'ativo' entra nas credenciais: desativar um usuario tem de barrar o
+        // login, senao a acao da tela de usuarios seria decorativa. A mensagem e
+        // a mesma de credencial errada, de proposito — dizer "sua conta esta
+        // desativada" confirma que o e-mail existe para quem esta tentando.
+        if (! Auth::attempt([...$this->only('email', 'password'), 'ativo' => true], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

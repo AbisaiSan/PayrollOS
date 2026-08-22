@@ -48,6 +48,12 @@ final class Navegacao
                     self::item('Auditoria', 'auditoria.index', 'history', Permissoes::AUDITORIA_VER),
                 ],
             ],
+            [
+                'titulo' => 'Sistema',
+                'itens' => [
+                    self::item('Usuários', 'usuarios.index', 'shield', Permissoes::USUARIOS_GERENCIAR),
+                ],
+            ],
         ];
     }
 
