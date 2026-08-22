@@ -7,6 +7,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import HistoricoStatusTimeline from '@/Components/HistoricoStatusTimeline.vue';
+import Anexos from '@/Components/Anexos.vue';
 import ModalConfirmarPagamento from '@/Components/ModalConfirmarPagamento.vue';
 import ModalMudarStatusPagamento from '@/Components/ModalMudarStatusPagamento.vue';
 import Icone from '@/Components/Icone.vue';
@@ -40,7 +41,7 @@ const props = defineProps<{
     transicoesPermitidas: Opcao[];
 }>();
 
-const { formatarMoeda, formatarData, formatarCompetencia, formatarDataHora, vencimentoRelativo, resumoConta } =
+const { formatarMoeda, formatarData, formatarCompetencia, vencimentoRelativo, resumoConta } =
     useFormato();
 const { pode } = usePermissoes();
 const confirm = useConfirm();
@@ -215,48 +216,14 @@ const cancelar = () => {
                     </div>
                 </div>
 
-                <!-- Anexos: versão simples; o componente completo é a tarefa 30 -->
-                <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
-                    <h2
-                        class="mb-3.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-55"
-                    >
-                        Comprovantes
-                    </h2>
-
-                    <div
-                        v-for="anexo in pagamento.anexos ?? []"
-                        :key="anexo.id"
-                        class="mb-2.5 flex items-center justify-between gap-2 rounded-md border border-ink-8 px-3.5 py-3"
-                    >
-                        <div class="flex min-w-0 items-center gap-2.5">
-                            <Icone nome="paperclip" :tamanho="18" class="shrink-0 text-ink-55" />
-                            <div class="min-w-0">
-                                <p class="truncate text-[13px] font-semibold">
-                                    {{ anexo.nome_arquivo }}
-                                </p>
-                                <p class="text-[12px] text-ink-55">
-                                    Enviado por {{ anexo.enviado_por?.name ?? 'sistema' }} ·
-                                    <span class="mono">{{ formatarDataHora(anexo.created_at) }}</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <a
-                            :href="route('anexos.download', anexo.id)"
-                            class="shrink-0 rounded-lg p-2 text-ink-70 hover:bg-ink-8"
-                            :title="`Baixar ${anexo.nome_arquivo}`"
-                        >
-                            <Icone nome="download" :tamanho="15" />
-                        </a>
-                    </div>
-
-                    <p
-                        v-if="!(pagamento.anexos ?? []).length"
-                        class="py-4 text-center text-[12.75px] text-ink-55"
-                    >
-                        Nenhum comprovante anexado.
-                    </p>
-                </div>
+                <Anexos
+                    tipo-registro="pagamento"
+                    :registro-id="pagamento.id"
+                    :anexos="pagamento.anexos ?? []"
+                    :pode-gerenciar="pode('pagamentos.gerenciar')"
+                    titulo="Comprovantes"
+                    vazio="Nenhum comprovante anexado."
+                />
             </div>
 
             <!-- Linha do tempo -->

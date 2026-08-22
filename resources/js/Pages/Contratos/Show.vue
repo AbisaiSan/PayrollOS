@@ -8,6 +8,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Aviso from '@/Components/Aviso.vue';
+import Anexos from '@/Components/Anexos.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -44,8 +45,7 @@ const props = defineProps<{
     pagamentosGerados: LinhaPagamento[];
 }>();
 
-const { formatarMoeda, formatarData, formatarDataHora, vencimentoRelativo, resumoConta } =
-    useFormato();
+const { formatarMoeda, formatarData, vencimentoRelativo, resumoConta } = useFormato();
 const { pode } = usePermissoes();
 
 const PERIODICIDADE: Record<string, string> = {
@@ -266,42 +266,14 @@ const classeLinha = () => (podeVerPagamentos.value ? 'cursor-pointer' : '');
                 </div>
             </div>
 
-            <!-- Anexos: o componente completo é a tarefa 30 -->
-            <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
-                <h2 class="mb-3.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-55">
-                    Documentos
-                </h2>
-
-                <div
-                    v-for="anexo in anexos"
-                    :key="anexo.id"
-                    class="mb-2.5 flex items-center justify-between gap-2 rounded-md border border-ink-8 px-3.5 py-3"
-                >
-                    <div class="flex min-w-0 items-center gap-2.5">
-                        <Icone nome="paperclip" :tamanho="18" class="shrink-0 text-ink-55" />
-                        <div class="min-w-0">
-                            <p class="truncate text-[13px] font-semibold">
-                                {{ anexo.nome_arquivo }}
-                            </p>
-                            <p class="text-[12px] text-ink-55">
-                                <span class="mono">{{ formatarDataHora(anexo.created_at) }}</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <a
-                        :href="route('anexos.download', anexo.id)"
-                        class="shrink-0 rounded-lg p-2 text-ink-70 hover:bg-ink-8"
-                        :title="`Baixar ${anexo.nome_arquivo}`"
-                    >
-                        <Icone nome="download" :tamanho="15" />
-                    </a>
-                </div>
-
-                <p v-if="!anexos.length" class="py-4 text-center text-[12.75px] text-ink-55">
-                    Nenhum documento anexado ao contrato.
-                </p>
-            </div>
+            <Anexos
+                tipo-registro="contrato"
+                :registro-id="contrato.id"
+                :anexos="anexos"
+                :pode-gerenciar="pode('contratos.gerenciar')"
+                titulo="Documentos"
+                vazio="Nenhum documento anexado ao contrato."
+            />
         </div>
     </AuthenticatedLayout>
 </template>

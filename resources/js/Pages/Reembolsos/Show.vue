@@ -8,6 +8,7 @@ import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import HistoricoStatusTimeline from '@/Components/HistoricoStatusTimeline.vue';
 import ModalRejeitarReembolso from '@/Components/ModalRejeitarReembolso.vue';
+import Anexos from '@/Components/Anexos.vue';
 import Icone from '@/Components/Icone.vue';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
@@ -34,8 +35,7 @@ const props = defineProps<{
     transicoesPermitidas: Opcao[];
 }>();
 
-const { formatarMoeda, formatarData, formatarDataHora, formatarDocumento, resumoConta } =
-    useFormato();
+const { formatarMoeda, formatarData, formatarDocumento, resumoConta } = useFormato();
 const { pode } = usePermissoes();
 const confirm = useConfirm();
 
@@ -80,22 +80,11 @@ const dados = computed(() => [
 
 /**
  * O comprovante é o motivo de a tela existir: quem aprova precisa vê-lo antes de
- * decidir, então ele fica destacado sozinho em vez de virar mais uma linha de
- * lista. A relação vem em `latest()`, e é o anexo mais recente que sobe para o
- * destaque de propósito: se o colaborador reenviou a nota corrigida, é ela que
- * vale para a decisão. Os anteriores continuam acessíveis logo abaixo.
+ * decidir. O componente de anexos recebe `destacarPrimeiro`, e como a relação vem
+ * em `latest()` é o mais recente que sobe: se o colaborador reenviou a nota
+ * corrigida, é ela que vale para a decisão.
  */
 const anexos = computed(() => props.reembolso.anexos ?? []);
-const comprovante = computed<Anexo | null>(() => anexos.value[0] ?? null);
-const anexosAnteriores = computed(() => anexos.value.slice(1));
-
-const formatarTamanho = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-
-    const kb = bytes / 1024;
-
-    return kb < 1024 ? `${Math.round(kb)} KB` : `${(kb / 1024).toFixed(1)} MB`;
-};
 
 const mudarStatus = (status: string) => {
     router.post(
@@ -304,95 +293,15 @@ const modalRejeitar = ref(false);
                     </div>
                 </div>
 
-                <!-- Comprovante em destaque; o componente completo de anexos é a tarefa 30 -->
-                <div class="rounded-lg border border-ink-8 bg-white p-5 shadow-card">
-                    <h2
-                        class="mb-3.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-55"
-                    >
-                        Comprovante
-                    </h2>
-
-                    <div
-                        v-if="comprovante"
-                        class="flex flex-wrap items-center justify-between gap-4 rounded-md border border-azul-100 bg-azul-50 px-4 py-4"
-                    >
-                        <div class="flex min-w-0 items-center gap-3.5">
-                            <span
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-azul-100 bg-white text-corebanx-azul"
-                            >
-                                <Icone nome="paperclip" :tamanho="20" />
-                            </span>
-                            <div class="min-w-0">
-                                <p class="truncate text-[13.75px] font-semibold">
-                                    {{ comprovante.nome_arquivo }}
-                                </p>
-                                <p class="mt-0.5 text-[12px] text-ink-55">
-                                    <span class="mono">{{
-                                        formatarTamanho(comprovante.tamanho)
-                                    }}</span>
-                                    · Enviado por
-                                    {{ comprovante.enviado_por?.name ?? 'sistema' }} ·
-                                    <span class="mono">{{
-                                        formatarDataHora(comprovante.created_at)
-                                    }}</span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <a :href="route('anexos.download', comprovante.id)">
-                            <Button label="Baixar comprovante" severity="secondary" size="small">
-                                <template #icon><Icone nome="download" :tamanho="16" /></template>
-                            </Button>
-                        </a>
-                    </div>
-
-                    <div
-                        v-else
-                        class="rounded-md border border-dashed border-ink-16 px-4 py-6 text-center"
-                    >
-                        <Icone nome="paperclip" :tamanho="20" class="mx-auto mb-2 text-ink-35" />
-                        <p class="text-[12.75px] text-ink-55">
-                            Nenhum comprovante anexado a esta solicitação.
-                        </p>
-                    </div>
-
-                    <template v-if="anexosAnteriores.length">
-                        <h3
-                            class="mb-2.5 mt-5 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-55"
-                        >
-                            Enviados antes
-                        </h3>
-
-                        <div
-                            v-for="anexo in anexosAnteriores"
-                            :key="anexo.id"
-                            class="mb-2.5 flex items-center justify-between gap-2 rounded-md border border-ink-8 px-3.5 py-3"
-                        >
-                            <div class="flex min-w-0 items-center gap-2.5">
-                                <Icone nome="paperclip" :tamanho="18" class="shrink-0 text-ink-55" />
-                                <div class="min-w-0">
-                                    <p class="truncate text-[13px] font-semibold">
-                                        {{ anexo.nome_arquivo }}
-                                    </p>
-                                    <p class="text-[12px] text-ink-55">
-                                        Enviado por {{ anexo.enviado_por?.name ?? 'sistema' }} ·
-                                        <span class="mono">{{
-                                            formatarDataHora(anexo.created_at)
-                                        }}</span>
-                                    </p>
-                                </div>
-                            </div>
-
-                            <a
-                                :href="route('anexos.download', anexo.id)"
-                                class="shrink-0 rounded-lg p-2 text-ink-70 hover:bg-ink-8"
-                                :title="`Baixar ${anexo.nome_arquivo}`"
-                            >
-                                <Icone nome="download" :tamanho="15" />
-                            </a>
-                        </div>
-                    </template>
-                </div>
+                <Anexos
+                    tipo-registro="reembolso"
+                    :registro-id="reembolso.id"
+                    :anexos="anexos"
+                    :pode-gerenciar="pode('reembolsos.gerenciar') && !estaPago"
+                    titulo="Comprovante"
+                    vazio="Nenhum comprovante anexado a esta solicitação."
+                    destacar-primeiro
+                />
             </div>
 
             <!-- Linha do tempo -->
