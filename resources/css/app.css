@@ -118,3 +118,38 @@
         @apply left-3 right-3 w-auto;
     }
 }
+
+/*
+ | Estado de carregamento (tarefa 40)
+ |
+ | Fica no CSS global e nao no componente porque o retangulo cinza pulsando e o
+ | mesmo em toda listagem — repetir a animacao por tela renderia keyframes
+ | duplicados em cada chunk.
+ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        rgba(13, 14, 14, 0.07) 25%,
+        rgba(13, 14, 14, 0.12) 37%,
+        rgba(13, 14, 14, 0.07) 63%
+    );
+    background-size: 400% 100%;
+    animation: skeleton 1.4s ease infinite;
+    border-radius: 6px;
+}
+
+@keyframes skeleton {
+    0% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+/* Quem pediu menos movimento nao precisa de um gradiente correndo na tela. */
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
+}

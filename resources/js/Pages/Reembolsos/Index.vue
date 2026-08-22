@@ -10,6 +10,9 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import EstadoListagem from '@/Components/EstadoListagem.vue';
+import TabelaEsqueleto from '@/Components/TabelaEsqueleto.vue';
+import { useConsulta } from '@/Composables/useConsulta';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { Opcao, Paginado } from '@/types';
@@ -50,19 +53,19 @@ const temFiltro = computed(
     () => !!(status.value || categoria.value || colaboradorId.value || inicio.value || fim.value),
 );
 
+const { carregando, erro, consultar: visitar, tentarNovamente } = useConsulta(
+    route('reembolsos.index'),
+);
+
 const consultar = (extras: Record<string, unknown> = {}) => {
-    router.get(
-        route('reembolsos.index'),
-        {
-            status: status.value || undefined,
-            categoria: categoria.value || undefined,
-            colaborador_id: colaboradorId.value || undefined,
-            inicio: paraIso(inicio.value) ?? undefined,
-            fim: paraIso(fim.value) ?? undefined,
-            ...extras,
-        },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
+    visitar({
+        status: status.value || undefined,
+        categoria: categoria.value || undefined,
+        colaborador_id: colaboradorId.value || undefined,
+        inicio: paraIso(inicio.value) ?? undefined,
+        fim: paraIso(fim.value) ?? undefined,
+        ...extras,
+    });
 };
 
 // Todos os controles são de escolha, não de digitação: aplicam na hora, sem debounce.
@@ -83,6 +86,8 @@ const mudarPagina = (evento: { page: number; rows: number }) => {
 const abrir = (evento: { data: LinhaReembolso }) => {
     router.get(route('reembolsos.show', evento.data.id));
 };
+
+const irParaCadastro = () => router.get(route('reembolsos.create'));
 
 const classeLinha = () => 'cursor-pointer';
 </script>
@@ -193,7 +198,19 @@ const classeLinha = () => 'cursor-pointer';
 
         <!-- Grid -->
         <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+            <TabelaEsqueleto v-if="carregando" :colunas="6" />
+
+            <EstadoListagem
+                v-else-if="erro"
+                variante="erro"
+                titulo="Não foi possível carregar os dados"
+                descricao="Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte."
+                acao="Tentar novamente"
+                @acao="tentarNovamente"
+            />
+
             <DataTable
+                v-else
                 :value="reembolsos.data"
                 data-key="id"
                 size="small"
@@ -210,13 +227,27 @@ const classeLinha = () => 'cursor-pointer';
                 @row-click="abrir"
             >
                 <template #empty>
-                    <p class="py-12 text-center text-[13px] text-ink-55">
-                        {{
-                            temFiltro
-                                ? 'Nenhuma solicitação encontrada com esses filtros.'
-                                : 'Nenhuma solicitação de reembolso registrada ainda.'
-                        }}
-                    </p>
+                    <EstadoListagem
+                        v-if="temFiltro"
+                        variante="vazio-filtro"
+                        titulo="Nenhuma solicitação encontrada para estes filtros"
+                        descricao="Ajuste os filtros aplicados ou limpe-os para ver todas as solicitações."
+                        acao="Limpar filtros"
+                        @acao="limparFiltros"
+                    />
+                    <EstadoListagem
+                        v-else
+                        variante="vazio"
+                        icone="receipt"
+                        titulo="Nenhuma solicitação de reembolso ainda"
+                        descricao="Quando alguém adiantar uma despesa, registre a solicitação aqui para ela entrar na fila de aprovação."
+                        :acao="
+                            podeAlguma(['reembolsos.gerenciar', 'reembolsos.solicitar'])
+                                ? 'Nova solicitação'
+                                : undefined
+                        "
+                        @acao="irParaCadastro"
+                    />
                 </template>
 
                 <Column field="descricao" header="Descrição">

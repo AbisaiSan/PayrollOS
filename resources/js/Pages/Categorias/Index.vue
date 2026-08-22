@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Select from 'primevue/select';
@@ -10,6 +10,9 @@ import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
 import ModalCategoria from '@/Components/ModalCategoria.vue';
+import EstadoListagem from '@/Components/EstadoListagem.vue';
+import TabelaEsqueleto from '@/Components/TabelaEsqueleto.vue';
+import { useConsulta } from '@/Composables/useConsulta';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { CategoriaPagamento, Opcao } from '@/types';
 
@@ -38,13 +41,11 @@ const abrirDialog = (categoria: LinhaCategoria | null = null) => {
     dialogAberto.value = true;
 };
 
-watch(tipo, () => {
-    router.get(
-        route('categorias.index'),
-        { tipo: tipo.value || undefined },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
-});
+const { carregando, erro, consultar, tentarNovamente } = useConsulta(
+    route('categorias.index'),
+);
+
+watch(tipo, () => consultar({ tipo: tipo.value || undefined }));
 </script>
 
 <template>
@@ -89,15 +90,36 @@ watch(tipo, () => {
             que a tabela inteira.
         -->
         <div class="max-w-[880px] overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
-            <DataTable :value="categorias" data-key="id" size="small">
+            <TabelaEsqueleto v-if="carregando" :colunas="4" :linhas="6" />
+
+            <EstadoListagem
+                v-else-if="erro"
+                variante="erro"
+                titulo="Não foi possível carregar as categorias"
+                descricao="Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte."
+                acao="Tentar novamente"
+                @acao="tentarNovamente"
+            />
+
+            <DataTable v-else :value="categorias" data-key="id" size="small">
                 <template #empty>
-                    <p class="py-12 text-center text-[13px] text-ink-55">
-                        {{
-                            tipo
-                                ? 'Nenhuma categoria desse tipo.'
-                                : 'Nenhuma categoria cadastrada ainda.'
-                        }}
-                    </p>
+                    <EstadoListagem
+                        v-if="tipo"
+                        variante="vazio-filtro"
+                        titulo="Nenhuma categoria desse tipo"
+                        descricao="Escolha outro tipo ou limpe o filtro para ver a lista inteira."
+                        acao="Limpar filtro"
+                        @acao="tipo = null"
+                    />
+                    <EstadoListagem
+                        v-else
+                        variante="vazio"
+                        icone="tags"
+                        titulo="Nenhuma categoria cadastrada ainda"
+                        descricao="As categorias classificam pagamentos e organizam os relatórios."
+                        :acao="pode('categorias.gerenciar') ? 'Criar a primeira categoria' : undefined"
+                        @acao="abrirDialog()"
+                    />
                 </template>
 
                 <Column field="nome" header="Nome">

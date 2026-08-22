@@ -10,7 +10,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import EstadoListagem from '@/Components/EstadoListagem.vue';
+import TabelaEsqueleto from '@/Components/TabelaEsqueleto.vue';
 import { debounce } from '@/Composables/useDebounce';
+import { useConsulta } from '@/Composables/useConsulta';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { Colaborador, Opcao, Paginado } from '@/types';
@@ -39,17 +42,17 @@ const TIPO_CONTRATO: Record<string, string> = {
 
 const temFiltro = computed(() => !!(busca.value || status.value || departamento.value));
 
+const { carregando, erro, consultar: visitar, tentarNovamente } = useConsulta(
+    route('colaboradores.index'),
+);
+
 const consultar = (extras: Record<string, unknown> = {}) => {
-    router.get(
-        route('colaboradores.index'),
-        {
-            busca: busca.value || undefined,
-            status: status.value || undefined,
-            departamento: departamento.value || undefined,
-            ...extras,
-        },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
+    visitar({
+        busca: busca.value || undefined,
+        status: status.value || undefined,
+        departamento: departamento.value || undefined,
+        ...extras,
+    });
 };
 
 // Debounce só na busca por texto; os selects aplicam na hora.
@@ -71,6 +74,8 @@ const mudarPagina = (evento: { page: number; rows: number }) => {
 const abrir = (evento: { data: LinhaColaborador }) => {
     router.get(route('colaboradores.show', evento.data.id));
 };
+
+const irParaCadastro = () => router.get(route('colaboradores.create'));
 
 const classeLinha = () => 'cursor-pointer';
 </script>
@@ -149,7 +154,19 @@ const classeLinha = () => 'cursor-pointer';
 
         <!-- Grid -->
         <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+            <TabelaEsqueleto v-if="carregando" :colunas="7" />
+
+            <EstadoListagem
+                v-else-if="erro"
+                variante="erro"
+                titulo="Não foi possível carregar os dados"
+                descricao="Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte."
+                acao="Tentar novamente"
+                @acao="tentarNovamente"
+            />
+
             <DataTable
+                v-else
                 :value="colaboradores.data"
                 data-key="id"
                 size="small"
@@ -166,13 +183,23 @@ const classeLinha = () => 'cursor-pointer';
                 @row-click="abrir"
             >
                 <template #empty>
-                    <p class="py-12 text-center text-[13px] text-ink-55">
-                        {{
-                            temFiltro
-                                ? 'Nenhum colaborador encontrado com esses filtros.'
-                                : 'Nenhum colaborador cadastrado ainda.'
-                        }}
-                    </p>
+                    <EstadoListagem
+                        v-if="temFiltro"
+                        variante="vazio-filtro"
+                        titulo="Nenhum colaborador encontrado para estes filtros"
+                        descricao="Ajuste os filtros aplicados ou limpe-os para ver todo o cadastro."
+                        acao="Limpar filtros"
+                        @acao="limparFiltros"
+                    />
+                    <EstadoListagem
+                        v-else
+                        variante="vazio"
+                        icone="users"
+                        titulo="Nenhum colaborador cadastrado ainda"
+                        descricao="O cadastro do colaborador e a conta de destino dele são o que permite lançar folha."
+                        :acao="pode('colaboradores.gerenciar') ? 'Cadastrar o primeiro colaborador' : undefined"
+                        @acao="irParaCadastro"
+                    />
                 </template>
 
                 <Column field="nome" header="Nome">

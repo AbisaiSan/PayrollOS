@@ -11,7 +11,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Icone from '@/Components/Icone.vue';
+import EstadoListagem from '@/Components/EstadoListagem.vue';
+import TabelaEsqueleto from '@/Components/TabelaEsqueleto.vue';
 import { debounce } from '@/Composables/useDebounce';
+import { useConsulta } from '@/Composables/useConsulta';
 import { useFormato } from '@/Composables/useFormato';
 import { usePermissoes } from '@/Composables/usePermissoes';
 import type { Opcao, Paginado } from '@/types';
@@ -60,19 +63,19 @@ const temFiltro = computed(
     () => !!(busca.value || status.value || categoriaId.value || inicio.value || fim.value),
 );
 
+const { carregando, erro, consultar: visitar, tentarNovamente } = useConsulta(
+    route('pagamentos.index'),
+);
+
 const consultar = (extras: Record<string, unknown> = {}) => {
-    router.get(
-        route('pagamentos.index'),
-        {
-            busca: busca.value || undefined,
-            status: status.value || undefined,
-            categoria_id: categoriaId.value || undefined,
-            inicio: paraIso(inicio.value) ?? undefined,
-            fim: paraIso(fim.value) ?? undefined,
-            ...extras,
-        },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
+    visitar({
+        busca: busca.value || undefined,
+        status: status.value || undefined,
+        categoria_id: categoriaId.value || undefined,
+        inicio: paraIso(inicio.value) ?? undefined,
+        fim: paraIso(fim.value) ?? undefined,
+        ...extras,
+    });
 };
 
 // Debounce só na busca por texto; os demais controles aplicam na hora.
@@ -113,6 +116,8 @@ const linhaVencida = (linha: LinhaPagamento) => {
 
     return dias !== null && dias < 0 && !['pago', 'cancelado'].includes(linha.status);
 };
+
+const irParaCadastro = () => router.get(route('pagamentos.create'));
 
 const classeLinha = (linha: LinhaPagamento) => ({
     'cursor-pointer': true,
@@ -253,7 +258,19 @@ const classeLinha = (linha: LinhaPagamento) => ({
 
         <!-- Grid -->
         <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+            <TabelaEsqueleto v-if="carregando" :colunas="6" />
+
+            <EstadoListagem
+                v-else-if="erro"
+                variante="erro"
+                titulo="Não foi possível carregar os dados"
+                descricao="Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte."
+                acao="Tentar novamente"
+                @acao="tentarNovamente"
+            />
+
             <DataTable
+                v-else
                 :value="pagamentos.data"
                 data-key="id"
                 size="small"
@@ -270,13 +287,23 @@ const classeLinha = (linha: LinhaPagamento) => ({
                 @row-click="abrir"
             >
                 <template #empty>
-                    <p class="py-12 text-center text-[13px] text-ink-55">
-                        {{
-                            temFiltro
-                                ? 'Nenhum lançamento encontrado com esses filtros.'
-                                : 'Nenhum lançamento cadastrado ainda.'
-                        }}
-                    </p>
+                    <EstadoListagem
+                        v-if="temFiltro"
+                        variante="vazio-filtro"
+                        titulo="Nenhum lançamento encontrado para estes filtros"
+                        descricao="Ajuste os filtros aplicados ou limpe-os para ver todos os lançamentos."
+                        acao="Limpar filtros"
+                        @acao="limparFiltros"
+                    />
+                    <EstadoListagem
+                        v-else
+                        variante="vazio"
+                        icone="wallet"
+                        titulo="Nenhum pagamento cadastrado ainda"
+                        descricao="Comece cadastrando colaboradores e fornecedores, depois lance o primeiro pagamento."
+                        :acao="pode('pagamentos.gerenciar') ? 'Lançar o primeiro pagamento' : undefined"
+                        @acao="irParaCadastro"
+                    />
                 </template>
 
                 <Column field="descricao" header="Descrição">

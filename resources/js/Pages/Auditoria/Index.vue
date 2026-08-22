@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Select from 'primevue/select';
@@ -8,6 +8,9 @@ import DatePicker from 'primevue/datepicker';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CabecalhoPagina from '@/Components/CabecalhoPagina.vue';
 import Icone from '@/Components/Icone.vue';
+import EstadoListagem from '@/Components/EstadoListagem.vue';
+import TabelaEsqueleto from '@/Components/TabelaEsqueleto.vue';
+import { useConsulta } from '@/Composables/useConsulta';
 import { useFormato } from '@/Composables/useFormato';
 import type { Opcao, Paginado } from '@/types';
 
@@ -43,18 +46,18 @@ const temFiltro = computed(
     () => !!(log.value || usuarioId.value || inicio.value || fim.value),
 );
 
+const { carregando, erro, consultar: visitar, tentarNovamente } = useConsulta(
+    route('auditoria.index'),
+);
+
 const consultar = (extras: Record<string, unknown> = {}) => {
-    router.get(
-        route('auditoria.index'),
-        {
-            log: log.value || undefined,
-            usuario_id: usuarioId.value || undefined,
-            inicio: paraIso(inicio.value) ?? undefined,
-            fim: paraIso(fim.value) ?? undefined,
-            ...extras,
-        },
-        { preserveState: true, preserveScroll: true, replace: true },
-    );
+    visitar({
+        log: log.value || undefined,
+        usuario_id: usuarioId.value || undefined,
+        inicio: paraIso(inicio.value) ?? undefined,
+        fim: paraIso(fim.value) ?? undefined,
+        ...extras,
+    });
 };
 
 watch([log, usuarioId, inicio, fim], () => consultar());
@@ -291,7 +294,19 @@ const camposCriados = (atividade: Atividade) => {
         </div>
 
         <div class="overflow-hidden rounded-lg border border-ink-8 bg-white shadow-card">
+            <TabelaEsqueleto v-if="carregando" :colunas="5" :linhas="8" />
+
+            <EstadoListagem
+                v-else-if="erro"
+                variante="erro"
+                titulo="Não foi possível carregar a trilha"
+                descricao="Verifique sua conexão e tente novamente. Se o problema continuar, contate o suporte."
+                acao="Tentar novamente"
+                @acao="tentarNovamente"
+            />
+
             <DataTable
+                v-else
                 :value="atividades.data"
                 data-key="id"
                 size="small"
@@ -306,13 +321,26 @@ const camposCriados = (atividade: Atividade) => {
                 @page="mudarPagina"
             >
                 <template #empty>
-                    <p class="py-12 text-center text-[13px] text-ink-55">
-                        {{
-                            temFiltro
-                                ? 'Nenhuma alteração registrada com esses filtros.'
-                                : 'Nenhuma alteração registrada ainda.'
-                        }}
-                    </p>
+                    <EstadoListagem
+                        v-if="temFiltro"
+                        variante="vazio-filtro"
+                        titulo="Nenhuma alteração para estes filtros"
+                        descricao="Ajuste os filtros aplicados ou limpe-os para ver a trilha inteira."
+                        acao="Limpar filtros"
+                        @acao="limparFiltros"
+                    />
+                    <!--
+                        Auditoria não tem "cadastrar o primeiro": a trilha se enche
+                        sozinha conforme o sistema é usado, então oferecer uma ação
+                        aqui mandaria a pessoa para o lugar errado.
+                    -->
+                    <EstadoListagem
+                        v-else
+                        variante="vazio"
+                        icone="history"
+                        titulo="Nenhuma alteração registrada ainda"
+                        descricao="A trilha começa a se encher assim que alguém alterar um cadastro ou mudar um status."
+                    />
                 </template>
 
                 <Column field="created_at" header="Quando">
