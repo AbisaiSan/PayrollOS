@@ -24,7 +24,9 @@ class FornecedorController extends Controller
             ->busca($request->string('busca')->toString())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('tipo_fornecedor'), fn ($q) => $q->where('tipo_fornecedor', $request->string('tipo_fornecedor')))
-            ->withCount(['contratos', 'contasBancarias'])
+            // contasAtivas e nao contasBancarias, mesma razao da listagem de
+            // colaboradores: conta inativa nao serve de destino de pagamento.
+            ->withCount(['contratos', 'contasAtivas'])
             ->orderBy('razao_social')
             ->paginate($request->integer('por_pagina', 15))
             ->withQueryString();

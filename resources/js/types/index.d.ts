@@ -76,6 +76,8 @@ export interface Fornecedor {
     tipo_fornecedor: 'produto' | 'servico' | 'ambos';
     email: string | null;
     telefone: string | null;
+    endereco: string | null;
+    observacoes?: string | null;
     status: 'ativo' | 'inativo';
     contas_bancarias?: ContaBancaria[];
 }

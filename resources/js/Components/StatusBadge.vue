@@ -17,7 +17,8 @@ interface Definicao {
  * verde ainda precisa achar o atraso varrendo a lista.
  *
  * Os status de pagamento entram aqui na Tarefa 1, os de reembolso na Tarefa 9 e
- * os de colaborador na Tarefa 13; fornecedor e contrato entram nas tarefas 19 e 22.
+ * os de colaborador na Tarefa 13 e os de fornecedor na Tarefa 19; contrato entra
+ * na tarefa 22.
  */
 const PAGAMENTO: Record<string, Definicao> = {
     pendente: { rotulo: 'Pendente', severidade: 'atencao', icone: 'clockOutline' },
@@ -44,7 +45,17 @@ const COLABORADOR: Record<string, Definicao> = {
     desligado: { rotulo: 'Desligado', severidade: 'neutro', icone: 'slashCircle' },
 };
 
-const DEFINICOES: Record<string, Definicao> = { ...PAGAMENTO, ...REEMBOLSO, ...COLABORADOR };
+/** Vocabulário de fornecedor. "Ativo" já vem de COLABORADOR com a mesma leitura. */
+const FORNECEDOR: Record<string, Definicao> = {
+    inativo: { rotulo: 'Inativo', severidade: 'neutro', icone: 'slashCircle' },
+};
+
+const DEFINICOES: Record<string, Definicao> = {
+    ...PAGAMENTO,
+    ...REEMBOLSO,
+    ...COLABORADOR,
+    ...FORNECEDOR,
+};
 
 const props = withDefaults(
     defineProps<{
