@@ -9,10 +9,9 @@ import { useFormato } from '@/Composables/useFormato';
 /**
  * Exportação de relatório.
  *
- * A interface existe; o endpoint ainda não. `relatorios.exportar` responde 501
- * até a exportação Excel/PDF entrar no backend, então a ação fica desabilitada
- * em vez de disparar um erro. Quando o endpoint existir, basta trocar o botão
- * desabilitado por um link para route('relatorios.exportar', {...parametros}).
+ * O download não passa pelo Inertia: a resposta é um arquivo, não uma página, e
+ * um visit do router tentaria interpretá-la como navegação. Por isso a ação é um
+ * link comum com os filtros na query string, e a rota devolve o arquivo direto.
  */
 const props = defineProps<{
     visivel: boolean;
@@ -49,6 +48,17 @@ watch(
 
 const periodo = computed(
     () => `${formatarData(props.filtros.inicio)} a ${formatarData(props.filtros.fim)}`,
+);
+
+/** Os mesmos filtros da tela, que é o que o modal promete no cabeçalho. */
+const enderecoDoArquivo = computed(() =>
+    route('relatorios.exportar', {
+        formato: formato.value,
+        inicio: props.filtros.inicio,
+        fim: props.filtros.fim,
+        categoria_id: props.filtros.categoria_id ?? undefined,
+        status: props.filtros.status ?? undefined,
+    }),
 );
 
 const fechar = () => emit('update:visivel', false);
@@ -117,23 +127,20 @@ const fechar = () => emit('update:visivel', false);
                 </button>
             </div>
 
-            <Aviso tom="atencao" icone="alertTriangle">
-                <strong>Exportação em breve.</strong> A geração do arquivo ainda não existe no
-                backend — a rota responde 501. Os números da tela já estão certos e podem ser
-                conferidos por aqui enquanto isso.
+            <Aviso>
+                O arquivo carrega os agregados que estão na tela e também a lista dos
+                lançamentos que os sustentam, com o período e os filtros escritos no
+                cabeçalho.
             </Aviso>
         </div>
 
         <template #footer>
-            <Button label="Fechar" severity="secondary" outlined size="small" @click="fechar" />
-            <Button
-                label="Exportar"
-                size="small"
-                disabled
-                title="A geração de Excel e PDF ainda não existe no backend"
-            >
-                <template #icon><Icone nome="download" :tamanho="16" /></template>
-            </Button>
+            <Button label="Cancelar" severity="secondary" outlined size="small" @click="fechar" />
+            <a :href="enderecoDoArquivo" @click="fechar">
+                <Button label="Exportar" size="small">
+                    <template #icon><Icone nome="download" :tamanho="16" /></template>
+                </Button>
+            </a>
         </template>
     </Dialog>
 </template>
